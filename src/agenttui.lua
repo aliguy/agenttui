@@ -641,18 +641,9 @@ wezterm.on("gui-startup", function(cmd)
     args = { "powershell", "-ExecutionPolicy", "Bypass", "-File", plugin_root .. "\\list_renderer.ps1" },
   })
 
-  -- Right pane: welcome (use @echo off to hide command prompts)
-  right_pane:send_text("@echo off & cls\r\n")
-  wezterm.time.call_after(0.3, function()
-    right_pane:send_text("echo.\r\n")
-    right_pane:send_text("echo.\r\n")
-    right_pane:send_text("echo          === AgentTUI ===\r\n")
-    right_pane:send_text("echo.\r\n")
-    right_pane:send_text("echo      No agents running yet.\r\n")
-    right_pane:send_text("echo.\r\n")
-    right_pane:send_text("echo   Press CTRL+S then n to create\r\n")
-    right_pane:send_text("echo   a new session.\r\n")
-  end)
+  -- Right pane: welcome via a one-shot PowerShell command (clean output, no prompt noise)
+  -- We close the default cmd pane and replace with a clean powershell welcome
+  right_pane:send_text("powershell -NoProfile -Command \"cls; Write-Host; Write-Host; Write-Host '         === AgentTUI ===' -ForegroundColor Cyan; Write-Host; Write-Host '     No agents running yet.' -ForegroundColor Gray; Write-Host; Write-Host '  Press CTRL+S then n to create' -ForegroundColor Gray; Write-Host '  a new session.' -ForegroundColor Gray; Write-Host; Read-Host 'Press Enter to dismiss'\"\r\n")
 end)
 
 return config
