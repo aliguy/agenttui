@@ -178,13 +178,43 @@ config.initial_rows = 45
 config.status_update_interval = 500
 
 -- ============================================================
--- KEYBINDINGS (CTRL+SHIFT+key — no leader key needed)
+-- KEYBINDINGS
+-- Disable WezTerm defaults to avoid conflicts, then define our own.
+-- Using ALT+key for AgentTUI actions (doesn't conflict with terminal)
 -- ============================================================
+config.disable_default_key_bindings = true
+
+-- Re-add essential WezTerm bindings
 config.keys = {
-  -- New session: CTRL+SHIFT+N
+  -- Clipboard
+  { key = "c", mods = "CTRL|SHIFT", action = act.CopyTo("Clipboard") },
+  { key = "v", mods = "CTRL|SHIFT", action = act.PasteFrom("Clipboard") },
+  -- Font size
+  { key = "-", mods = "CTRL", action = act.DecreaseFontSize },
+  { key = "=", mods = "CTRL", action = act.IncreaseFontSize },
+  { key = "0", mods = "CTRL", action = act.ResetFontSize },
+  -- Scroll
+  { key = "PageUp", mods = "SHIFT", action = act.ScrollByPage(-1) },
+  { key = "PageDown", mods = "SHIFT", action = act.ScrollByPage(1) },
+  -- Pane navigation
+  { key = "LeftArrow", mods = "CTRL|SHIFT", action = act.ActivatePaneDirection("Left") },
+  { key = "RightArrow", mods = "CTRL|SHIFT", action = act.ActivatePaneDirection("Right") },
+  { key = "UpArrow", mods = "CTRL|SHIFT", action = act.ActivatePaneDirection("Up") },
+  { key = "DownArrow", mods = "CTRL|SHIFT", action = act.ActivatePaneDirection("Down") },
+  -- Tab navigation (Ctrl+Tab / Ctrl+Shift+Tab)
+  { key = "Tab", mods = "CTRL", action = act.ActivateTabRelative(1) },
+  { key = "Tab", mods = "CTRL|SHIFT", action = act.ActivateTabRelative(-1) },
+  -- Close tab
+  { key = "w", mods = "CTRL|SHIFT", action = act.CloseCurrentTab({ confirm = true }) },
+
+  -- ===========================================
+  -- AgentTUI bindings: ALT+key
+  -- ===========================================
+
+  -- New session: ALT+N
   {
     key = "n",
-    mods = "CTRL|SHIFT",
+    mods = "ALT",
     action = act.PromptInputLine({
       description = wezterm.format({
         { Attribute = { Intensity = "Bold" } },
@@ -244,10 +274,10 @@ config.keys = {
     }),
   },
 
-  -- New session with prompt
+  -- New session with prompt: ALT+SHIFT+N
   {
     key = "n",
-    mods = "CTRL|ALT|SHIFT",
+    mods = "ALT|SHIFT",
     action = act.PromptInputLine({
       description = wezterm.format({
         { Attribute = { Intensity = "Bold" } },
@@ -311,10 +341,10 @@ config.keys = {
     }),
   },
 
-  -- Pause current session
+  -- Pause current session: ALT+C
   {
     key = "c",
-    mods = "CTRL|SHIFT",
+    mods = "ALT",
     action = wezterm.action_callback(function(window, pane)
       local s = find_session_by_pane(pane:pane_id())
       if not s then
@@ -334,10 +364,10 @@ config.keys = {
     end),
   },
 
-  -- Resume a paused session
+  -- Resume a paused session: ALT+R
   {
     key = "r",
-    mods = "CTRL|SHIFT",
+    mods = "ALT",
     action = wezterm.action_callback(function(window, pane)
       local paused = {}
       for _, s in ipairs(sessions) do
@@ -382,10 +412,10 @@ config.keys = {
     end),
   },
 
-  -- Delete session
+  -- Delete session: ALT+SHIFT+D
   {
     key = "d",
-    mods = "CTRL|ALT|SHIFT",
+    mods = "ALT|SHIFT",
     action = wezterm.action_callback(function(window, pane)
       if #sessions == 0 then return end
       local choices = {}
@@ -424,10 +454,10 @@ config.keys = {
     end),
   },
 
-  -- Push changes
+  -- Push changes: ALT+P
   {
     key = "p",
-    mods = "CTRL|SHIFT",
+    mods = "ALT",
     action = wezterm.action_callback(function(window, pane)
       local s = find_session_by_pane(pane:pane_id())
       if not s then
@@ -441,10 +471,10 @@ config.keys = {
     end),
   },
 
-  -- Show diff
+  -- Show diff: ALT+D
   {
     key = "d",
-    mods = "CTRL|SHIFT",
+    mods = "ALT",
     action = wezterm.action_callback(function(window, pane)
       local s = find_session_by_pane(pane:pane_id())
       if not s then
@@ -460,10 +490,10 @@ config.keys = {
     end),
   },
 
-  -- Open terminal in worktree
+  -- Open terminal in worktree: ALT+T
   {
     key = "t",
-    mods = "CTRL|SHIFT",
+    mods = "ALT",
     action = wezterm.action_callback(function(window, pane)
       local s = find_session_by_pane(pane:pane_id())
       if not s then
@@ -475,28 +505,27 @@ config.keys = {
     end),
   },
 
-  -- Navigate sessions
-  { key = "j", mods = "CTRL|SHIFT", action = act.ActivateTabRelative(1) },
-  { key = "k", mods = "CTRL|SHIFT", action = act.ActivateTabRelative(-1) },
-  { key = "]", mods = "CTRL|SHIFT", action = act.ActivateTabRelative(1) },
-  { key = "[", mods = "CTRL|SHIFT", action = act.ActivateTabRelative(-1) },
+  -- Navigate sessions: ALT+J / ALT+K
+  { key = "j", mods = "ALT", action = act.ActivateTabRelative(1) },
+  { key = "k", mods = "ALT", action = act.ActivateTabRelative(-1) },
+  { key = "]", mods = "ALT", action = act.ActivateTabRelative(1) },
+  { key = "[", mods = "ALT", action = act.ActivateTabRelative(-1) },
 
-  -- Tab numbers
-  { key = "1", mods = "CTRL|SHIFT", action = act.ActivateTab(0) },
-  { key = "2", mods = "CTRL|SHIFT", action = act.ActivateTab(1) },
-  { key = "3", mods = "CTRL|SHIFT", action = act.ActivateTab(2) },
-  { key = "4", mods = "CTRL|SHIFT", action = act.ActivateTab(3) },
-  { key = "5", mods = "CTRL|SHIFT", action = act.ActivateTab(4) },
-  { key = "6", mods = "CTRL|SHIFT", action = act.ActivateTab(5) },
-  { key = "7", mods = "CTRL|SHIFT", action = act.ActivateTab(6) },
-  { key = "8", mods = "CTRL|SHIFT", action = act.ActivateTab(7) },
-  { key = "9", mods = "CTRL|SHIFT", action = act.ActivateTab(8) },
+  -- Tab numbers: ALT+1-9
+  { key = "1", mods = "ALT", action = act.ActivateTab(0) },
+  { key = "2", mods = "ALT", action = act.ActivateTab(1) },
+  { key = "3", mods = "ALT", action = act.ActivateTab(2) },
+  { key = "4", mods = "ALT", action = act.ActivateTab(3) },
+  { key = "5", mods = "ALT", action = act.ActivateTab(4) },
+  { key = "6", mods = "ALT", action = act.ActivateTab(5) },
+  { key = "7", mods = "ALT", action = act.ActivateTab(6) },
+  { key = "8", mods = "ALT", action = act.ActivateTab(7) },
+  { key = "9", mods = "ALT", action = act.ActivateTab(8) },
 
-
-  -- Help: CTRL+SHIFT+/
+  -- Help: ALT+/
   {
     key = "/",
-    mods = "CTRL|SHIFT",
+    mods = "ALT",
     action = wezterm.action_callback(function(window, pane)
       local help_pane = pane:split({ direction = "Bottom", size = 0.4 })
       local lines = {
@@ -505,22 +534,23 @@ config.keys = {
         "echo ========================================",
         "echo.",
         "echo   Session Management:",
-        "echo     Ctrl+Shift+N       New session",
-        "echo     Ctrl+Shift+Alt+N   New session with prompt",
-        "echo     Ctrl+Shift+C       Pause current session",
-        "echo     Ctrl+Shift+R       Resume a paused session",
-        "echo     Ctrl+Shift+P       Push changes to remote",
-        "echo     Ctrl+Shift+Alt+D   Delete a session",
+        "echo     Alt+N         New session",
+        "echo     Alt+Shift+N   New session with prompt",
+        "echo     Alt+C         Pause current session",
+        "echo     Alt+R         Resume a paused session",
+        "echo     Alt+P         Push changes to remote",
+        "echo     Alt+Shift+D   Delete a session",
         "echo.",
         "echo   Navigation:",
-        "echo     Ctrl+Shift+J       Next session",
-        "echo     Ctrl+Shift+K       Previous session",
+        "echo     Alt+J / Alt+]   Next session",
+        "echo     Alt+K / Alt+[   Previous session",
+        "echo     Alt+1-9         Jump to tab",
         "echo.",
         "echo   Views:",
-        "echo     Ctrl+Shift+D       Show git diff",
-        "echo     Ctrl+Shift+T       Open terminal in worktree",
+        "echo     Alt+D         Show git diff",
+        "echo     Alt+T         Open terminal in worktree",
         "echo.",
-        "echo   Ctrl+Shift+/        This help",
+        "echo   Alt+/           This help",
         "echo ========================================",
         "pause",
         "exit",
@@ -573,10 +603,10 @@ wezterm.on("update-status", function(window, pane)
   if active_tab then s = find_session_by_tab(active_tab:tab_id()) end
   if not s then s = find_session_by_pane(pane:pane_id()) end
 
-  -- Left: keybinding hints (Ctrl+Shift+key)
+  -- Left: keybinding hints (Alt+key)
   window:set_left_status(wezterm.format({
     { Foreground = { Color = COLORS.accent } }, { Attribute = { Intensity = "Bold" } },
-    { Text = " Ctrl+Shift+" }, { Attribute = { Intensity = "Normal" } },
+    { Text = " Alt+" }, { Attribute = { Intensity = "Normal" } },
     { Foreground = { Color = COLORS.text } }, { Text = "N" },
     { Foreground = { Color = COLORS.dim } }, { Text = " new  " },
     { Foreground = { Color = COLORS.text } }, { Text = "C" },
@@ -632,7 +662,7 @@ wezterm.on("gui-startup", function(cmd)
 
   -- Right pane: welcome via a one-shot PowerShell command (clean output, no prompt noise)
   -- We close the default cmd pane and replace with a clean powershell welcome
-  right_pane:send_text("powershell -NoProfile -Command \"cls; Write-Host; Write-Host; Write-Host '         === AgentTUI ===' -ForegroundColor Cyan; Write-Host; Write-Host '     No agents running yet.' -ForegroundColor Gray; Write-Host; Write-Host '  Press Ctrl+Shift+N to create' -ForegroundColor Gray; Write-Host '  a new session.' -ForegroundColor Gray; Write-Host; Read-Host 'Press Enter to dismiss'\"\r\n")
+  right_pane:send_text("powershell -NoProfile -Command \"cls; Write-Host; Write-Host; Write-Host '         === AgentTUI ===' -ForegroundColor Cyan; Write-Host; Write-Host '     No agents running yet.' -ForegroundColor Gray; Write-Host; Write-Host '  Press Alt+N to create a new session.' -ForegroundColor Gray; Write-Host '  Press Alt+/ for help.' -ForegroundColor DarkGray; Write-Host; Read-Host 'Press Enter to dismiss'\"\r\n")
 end)
 
 return config

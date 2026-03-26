@@ -98,7 +98,7 @@ function Render {
         $buf += "Press "
         $buf += FG $cMauve[0] $cMauve[1] $cMauve[2]
         $buf += Bold
-        $buf += "Ctrl+Shift+N"
+        $buf += "Alt+N"
         $buf += Reset
         $buf += FG $cOverlay0[0] $cOverlay0[1] $cOverlay0[2]
         $buf += " to create one."
