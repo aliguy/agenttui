@@ -133,7 +133,7 @@ end
 local function create_worktree(repo_path, title, branch_prefix)
   local ts = tostring(os.time())
   local safe = sanitize_branch(title)
-  local branch = sanitize_branch((branch_prefix or "agenttui/") .. safe)
+  local branch = sanitize_branch((branch_prefix or "agenttui/") .. safe .. "-" .. ts)
   local wt_path = normalize_path(WORKTREE_DIR .. "/" .. safe .. "-" .. ts)
 
   wezterm.log_info("AgentTUI: Creating worktree: repo=" .. repo_path .. " branch=" .. branch .. " path=" .. wt_path)
@@ -648,26 +648,25 @@ wezterm.on("update-status", function(window, pane)
   if not s then s = find_session_by_pane(pane:pane_id()) end
 
   -- Bottom menu bar (Claude Squad style)
-  local sep = { Foreground = { Color = "#3C3C3C" } }
-  local dot = { Text = " \u{2022} " }
-  local kc = { Foreground = { Color = "#7F7A7A" } }
-  local dc = { Foreground = { Color = "#9C9494" } }
-  local ac = { Foreground = { Color = "#b4befe" } }
-
   window:set_left_status(wezterm.format({
     { Text = "  " },
-    ac, { Text = "a-n" }, dc, { Text = " new" },
-    sep, dot,
-    ac, { Text = "a-D" }, dc, { Text = " kill" },
-    sep, dot,
-    ac, { Text = "a-s" }, dc, { Text = " submit PR" },
-    sep, dot,
-    ac, { Text = "a-c" }, dc, { Text = " checkout" },
-    sep, dot,
-    kc, { Text = "a-j/k" }, dc, { Text = " navigate" },
-    sep, dot,
-    kc, { Text = "a-/" }, dc, { Text = " help" },
-    { Text = "  " },
+    { Foreground = { Color = "#b4befe" } }, { Text = "a-n" },
+    { Foreground = { Color = "#9C9494" } }, { Text = " new" },
+    { Foreground = { Color = "#3C3C3C" } }, { Text = " | " },
+    { Foreground = { Color = "#b4befe" } }, { Text = "a-D" },
+    { Foreground = { Color = "#9C9494" } }, { Text = " kill" },
+    { Foreground = { Color = "#3C3C3C" } }, { Text = " | " },
+    { Foreground = { Color = "#b4befe" } }, { Text = "a-s" },
+    { Foreground = { Color = "#9C9494" } }, { Text = " submit PR" },
+    { Foreground = { Color = "#3C3C3C" } }, { Text = " | " },
+    { Foreground = { Color = "#b4befe" } }, { Text = "a-c" },
+    { Foreground = { Color = "#9C9494" } }, { Text = " checkout" },
+    { Foreground = { Color = "#3C3C3C" } }, { Text = " | " },
+    { Foreground = { Color = "#7F7A7A" } }, { Text = "a-j/k" },
+    { Foreground = { Color = "#9C9494" } }, { Text = " navigate" },
+    { Foreground = { Color = "#3C3C3C" } }, { Text = " | " },
+    { Foreground = { Color = "#7F7A7A" } }, { Text = "a-/" },
+    { Foreground = { Color = "#9C9494" } }, { Text = " help " },
   }))
 
   -- Right: session info
