@@ -150,18 +150,18 @@ function Render {
         $buf += Reset
         if ($sel) { $buf += BG $cSurface0[0] $cSurface0[1] $cSurface0[2] }
 
-        # Status icon
+        # Status icon (plain ASCII - Unicode doesn't render in PS console)
         $status = "$($s.status)".Trim().ToLower()
         if ($status -eq "running") {
-            $buf += FG $cGreen[0] $cGreen[1] $cGreen[2]; $buf += " $([char]0x2022)"
+            $buf += FG $cGreen[0] $cGreen[1] $cGreen[2]; $buf += " o"
         } elseif ($status -eq "ready") {
-            $buf += FG $cBlue[0] $cBlue[1] $cBlue[2]; $buf += " $([char]0x2022)"
+            $buf += FG $cBlue[0] $cBlue[1] $cBlue[2]; $buf += " o"
         } elseif ($status -eq "paused") {
-            $buf += FG $cOverlay0[0] $cOverlay0[1] $cOverlay0[2]; $buf += " $([char]0x2016)"
+            $buf += FG $cOverlay0[0] $cOverlay0[1] $cOverlay0[2]; $buf += " ="
         } elseif ($status -eq "loading") {
-            $buf += FG $cYellow[0] $cYellow[1] $cYellow[2]; $buf += " $([char]0x25CB)"
+            $buf += FG $cYellow[0] $cYellow[1] $cYellow[2]; $buf += " ~"
         } else {
-            $buf += FG $cOverlay0[0] $cOverlay0[1] $cOverlay0[2]; $buf += " $([char]0x2022)"
+            $buf += FG $cOverlay0[0] $cOverlay0[1] $cOverlay0[2]; $buf += " o"
         }
         $buf += Reset
 
