@@ -498,9 +498,9 @@ config.keys = {
     end),
   },
 
-  -- Push changes: ALT+P
+  -- Submit PR / Push changes: ALT+S
   {
-    key = "p",
+    key = "s",
     mods = "ALT",
     action = wezterm.action_callback(function(window, pane)
       local s = find_session_by_pane(pane:pane_id())
@@ -647,30 +647,26 @@ wezterm.on("update-status", function(window, pane)
   if active_tab then s = find_session_by_tab(active_tab:tab_id()) end
   if not s then s = find_session_by_pane(pane:pane_id()) end
 
-  -- Bottom menu bar (Claude Squad style): n new · d kill · enter open · p push · c checkout · tab switch · q quit
+  -- Bottom menu bar (Claude Squad style)
   local sep = { Foreground = { Color = "#3C3C3C" } }
-  local sep_text = { Text = " \u{2022} " }  -- bullet dot
-  local key_color = { Foreground = { Color = "#7F7A7A" } }
-  local desc_color = { Foreground = { Color = "#9C9494" } }
-  local action_color = { Foreground = { Color = "#b4befe" } }
+  local dot = { Text = " \u{2022} " }
+  local kc = { Foreground = { Color = "#7F7A7A" } }
+  local dc = { Foreground = { Color = "#9C9494" } }
+  local ac = { Foreground = { Color = "#b4befe" } }
 
   window:set_left_status(wezterm.format({
     { Text = "  " },
-    action_color, { Text = "n" }, desc_color, { Text = " new" },
-    sep, sep_text,
-    action_color, { Text = "d" }, desc_color, { Text = " kill" },
-    sep, sep_text,
-    key_color, { Text = "enter" }, desc_color, { Text = " open" },
-    sep, sep_text,
-    action_color, { Text = "p" }, desc_color, { Text = " push" },
-    sep, sep_text,
-    action_color, { Text = "c" }, desc_color, { Text = " checkout" },
-    sep, sep_text,
-    key_color, { Text = "tab" }, desc_color, { Text = " switch" },
-    sep, sep_text,
-    key_color, { Text = "?" }, desc_color, { Text = " help" },
-    sep, sep_text,
-    key_color, { Text = "q" }, desc_color, { Text = " quit" },
+    ac, { Text = "a-n" }, dc, { Text = " new" },
+    sep, dot,
+    ac, { Text = "a-D" }, dc, { Text = " kill" },
+    sep, dot,
+    ac, { Text = "a-s" }, dc, { Text = " submit PR" },
+    sep, dot,
+    ac, { Text = "a-c" }, dc, { Text = " checkout" },
+    sep, dot,
+    kc, { Text = "a-j/k" }, dc, { Text = " navigate" },
+    sep, dot,
+    kc, { Text = "a-/" }, dc, { Text = " help" },
     { Text = "  " },
   }))
 
