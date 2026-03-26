@@ -98,9 +98,18 @@ end
 -- ============================================================
 -- GIT WORKTREE
 -- ============================================================
+-- Convert /c/Users/... or /C/Users/... to C:\Users\...
+local function normalize_path(p)
+  if not p then return "" end
+  -- Convert MSYS-style /c/ to C:\
+  p = p:gsub("^/(%a)/", function(drive) return drive:upper() .. ":\\" end)
+  -- Convert remaining forward slashes to backslashes
+  p = p:gsub("/", "\\")
+  return p
+end
+
 local function git_in(dir, args)
-  -- Normalize path for Windows
-  local norm_dir = dir:gsub("/", "\\")
+  local norm_dir = normalize_path(dir)
   local cmd = { "git", "-C", norm_dir }
   for _, a in ipairs(args) do table.insert(cmd, a) end
   local success, stdout, stderr = wezterm.run_child_process(cmd)
@@ -115,8 +124,9 @@ local function sanitize_branch(name)
 end
 
 local function detect_repo(path)
-  local ok, stdout = git_in(path or ".", { "rev-parse", "--show-toplevel" })
-  if ok and stdout ~= "" then return stdout end
+  local norm = normalize_path(path or ".")
+  local ok, stdout = git_in(norm, { "rev-parse", "--show-toplevel" })
+  if ok and stdout ~= "" then return normalize_path(stdout) end
   return nil
 end
 
@@ -124,7 +134,7 @@ local function create_worktree(repo_path, title, branch_prefix)
   local ts = tostring(os.time())
   local safe = sanitize_branch(title)
   local branch = sanitize_branch((branch_prefix or "agenttui/") .. safe)
-  local wt_path = (WORKTREE_DIR .. "/" .. safe .. "-" .. ts):gsub("/", "\\")
+  local wt_path = normalize_path(WORKTREE_DIR .. "/" .. safe .. "-" .. ts)
 
   wezterm.log_info("AgentTUI: Creating worktree: repo=" .. repo_path .. " branch=" .. branch .. " path=" .. wt_path)
 
@@ -250,7 +260,11 @@ config.keys = {
               local mwin = _G.pending_mux_window
               _G.pending_session_name = nil
               _G.pending_mux_window = nil
-              if not name or not repo_input or repo_input == "" then return end
+              if not name then return end
+              if not repo_input or repo_input == "" then
+                wezterm.log_error("AgentTUI: No repo path provided")
+                return
+              end
 
               -- Defer git ops out of callback
               wezterm.time.call_after(0, function()
