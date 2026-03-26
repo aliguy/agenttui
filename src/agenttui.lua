@@ -221,6 +221,8 @@ config.keys = {
   -- ===========================================
 
   -- New session: ALT+N
+  -- Two prompts: 1) session name, 2) repo path
+  -- Uses a pending_session global to pass data between callbacks
   {
     key = "n",
     mods = "ALT",
@@ -232,85 +234,61 @@ config.keys = {
       }),
       action = wezterm.action_callback(function(window, pane, session_name)
         if not session_name or session_name == "" then return end
-
-        -- After getting the name, ask for the repo path
+        -- Store name globally and prompt for repo
+        _G.pending_session_name = session_name
         window:perform_action(
           act.PromptInputLine({
             description = wezterm.format({
               { Attribute = { Intensity = "Bold" } },
               { Foreground = { Color = "#f9e2af" } },
-              { Text = "Git repo path (or Enter for cwd): " },
+              { Text = "Git repo path: " },
             }),
             action = wezterm.action_callback(function(w2, p2, repo_input)
-              wezterm.log_info("AgentTUI: repo_input='" .. (repo_input or "nil") .. "'")
-              -- Use provided path or try to detect from CWD
-              local repo
-              if repo_input and repo_input ~= "" then
-                repo = detect_repo(repo_input)
+              local name = _G.pending_session_name
+              _G.pending_session_name = nil
+              if not name or not repo_input or repo_input == "" then return end
+
+              -- Defer the heavy work to avoid blocking in callback
+              wezterm.time.call_after(0, function()
+                local repo = detect_repo(repo_input)
                 if not repo then
-                  -- Try the path directly
-                  repo = repo_input:gsub("\\", "/"):gsub("/$", "")
-                  local check = detect_repo(repo)
-                  if check then repo = check else
-                    wezterm.log_error("AgentTUI: '" .. repo_input .. "' is not a git repo")
-                    return
-                  end
-                end
-              else
-                -- Try CWD
-                local cwd_url = p2:get_current_working_dir()
-                local cwd = ""
-                if cwd_url then
-                  -- WezTerm returns a URL; extract the path
-                  cwd = cwd_url.file_path or ""
-                  -- On Windows, file_path might be /C:/Users/... - strip leading /
-                  if cwd:match("^/%a:") then cwd = cwd:sub(2) end
-                  cwd = cwd:gsub("/$", "")
-                end
-                if cwd == "" then cwd = home end
-                repo = detect_repo(cwd)
-                if not repo then
-                  wezterm.log_error("AgentTUI: CWD '" .. cwd .. "' is not a git repo. Provide a path.")
+                  wezterm.log_error("AgentTUI: '" .. repo_input .. "' is not a git repo")
                   return
                 end
-              end
 
-              local user_cfg = load_user_config()
-              local wt, err = create_worktree(repo, session_name, user_cfg.branch_prefix or "agenttui/")
-              if not wt then
-                wezterm.log_error("AgentTUI: " .. (err or "worktree error"))
-                return
-              end
+                local user_cfg = load_user_config()
+                local wt, err = create_worktree(repo, name, user_cfg.branch_prefix or "agenttui/")
+                if not wt then
+                  wezterm.log_error("AgentTUI: " .. (err or "worktree error"))
+                  return
+                end
 
-              local id = tostring(os.time()) .. "-" .. tostring(math.random(10000, 99999))
-              local program = user_cfg.default_program or "claude"
-              local args = {}
-              for word in program:gmatch("%S+") do table.insert(args, word) end
+                local id = tostring(os.time()) .. "-" .. tostring(math.random(10000, 99999))
+                local program = user_cfg.default_program or "claude"
+                local prog_args = {}
+                for word in program:gmatch("%S+") do table.insert(prog_args, word) end
 
-              local tab, new_pane, _ = w2:mux_window():spawn_tab({
-                args = args,
-                cwd = wt.worktree_path,
-              })
+                local tab, new_pane, _ = w2:mux_window():spawn_tab({
+                  args = prog_args,
+                  cwd = wt.worktree_path,
+                })
 
-              if tab and new_pane then
-                tab:set_title(session_name)
-                local s = {
-                  id = id,
-                  title = session_name,
-                  program = program,
-                  status = "running",
-                  repo_path = repo,
-                  branch = wt.branch,
-                  worktree_path = wt.worktree_path,
-                  base_commit = wt.base_commit,
-                  pane_id = new_pane:pane_id(),
-                  tab_id = tab:tab_id(),
-                  diff_stats = { additions = 0, deletions = 0 },
-                  created_at = os.date("!%Y-%m-%dT%H:%M:%SZ"),
-                }
-                table.insert(sessions, s)
-                state_save()
-              end
+                if tab and new_pane then
+                  tab:set_title(name)
+                  table.insert(sessions, {
+                    id = id, title = name, program = program, status = "running",
+                    repo_path = repo, branch = wt.branch,
+                    worktree_path = wt.worktree_path, base_commit = wt.base_commit,
+                    pane_id = new_pane:pane_id(), tab_id = tab:tab_id(),
+                    diff_stats = { additions = 0, deletions = 0 },
+                    created_at = os.date("!%Y-%m-%dT%H:%M:%SZ"),
+                  })
+                  state_save()
+                  wezterm.log_info("AgentTUI: Session '" .. name .. "' created on branch " .. wt.branch)
+                else
+                  wezterm.log_error("AgentTUI: Failed to spawn tab")
+                end
+              end)
             end),
           }),
           pane
