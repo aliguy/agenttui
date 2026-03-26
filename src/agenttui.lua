@@ -286,25 +286,47 @@ config.keys = {
                 local prog_args = {}
                 for word in program:gmatch("%S+") do table.insert(prog_args, word) end
 
-                local tab, new_pane, _ = mwin:spawn_tab({
-                  args = prog_args,
-                  cwd = wt.worktree_path,
-                })
+                -- Get the current preview pane and replace it with the agent
+                local preview_pane = _G.at_preview_pane_id and wezterm.mux.get_pane(_G.at_preview_pane_id)
+                local list_pane = _G.at_list_pane_id and wezterm.mux.get_pane(_G.at_list_pane_id)
 
-                if tab and new_pane then
-                  tab:set_title(name)
+                local new_pane
+                if preview_pane then
+                  -- Split from the list pane to create a new right pane with the agent
+                  new_pane = list_pane:split({
+                    direction = "Right",
+                    size = 0.7,
+                    args = prog_args,
+                    cwd = wt.worktree_path,
+                  })
+                  -- Kill the old welcome/preview pane
+                  preview_pane:send_text("exit\r\n")
+                else
+                  -- Fallback: spawn as tab
+                  local tab2
+                  tab2, new_pane, _ = mwin:spawn_tab({
+                    args = prog_args,
+                    cwd = wt.worktree_path,
+                  })
+                  if tab2 then tab2:set_title(name) end
+                end
+
+                if new_pane then
+                  _G.at_preview_pane_id = new_pane:pane_id()
+                  local main_tab = new_pane:tab()
                   table.insert(sessions, {
                     id = id, title = name, program = program, status = "running",
                     repo_path = repo, branch = wt.branch,
                     worktree_path = wt.worktree_path, base_commit = wt.base_commit,
-                    pane_id = new_pane:pane_id(), tab_id = tab:tab_id(),
+                    pane_id = new_pane:pane_id(),
+                    tab_id = main_tab and main_tab:tab_id() or nil,
                     diff_stats = { additions = 0, deletions = 0 },
                     created_at = os.date("!%Y-%m-%dT%H:%M:%SZ"),
                   })
                   state_save()
                   wezterm.log_info("AgentTUI: Session '" .. name .. "' created on branch " .. wt.branch)
                 else
-                  wezterm.log_error("AgentTUI: Failed to spawn tab")
+                  wezterm.log_error("AgentTUI: Failed to spawn pane")
                 end
               end)
             end),
