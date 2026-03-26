@@ -152,18 +152,21 @@ function Render {
         $buf += Reset
         if ($sel) { $buf += BG $cSurface0[0] $cSurface0[1] $cSurface0[2] }
 
-        # Status icon (UTF-8 encoding set above)
+        # Status icon
+        $dot = [char]0x25CF    # ●
+        $circle = [char]0x25CB # ○
+        $pause = [char]0x2016  # ‖
         $status = "$($s.status)".Trim().ToLower()
         if ($status -eq "running") {
-            $buf += FG $cGreen[0] $cGreen[1] $cGreen[2]; $buf += " ● "
+            $buf += FG $cGreen[0] $cGreen[1] $cGreen[2]; $buf += " $dot "
         } elseif ($status -eq "ready") {
-            $buf += FG $cBlue[0] $cBlue[1] $cBlue[2]; $buf += " ● "
+            $buf += FG $cBlue[0] $cBlue[1] $cBlue[2]; $buf += " $dot "
         } elseif ($status -eq "paused") {
-            $buf += FG $cOverlay0[0] $cOverlay0[1] $cOverlay0[2]; $buf += " ⏸ "
+            $buf += FG $cOverlay0[0] $cOverlay0[1] $cOverlay0[2]; $buf += " $pause "
         } elseif ($status -eq "loading") {
-            $buf += FG $cYellow[0] $cYellow[1] $cYellow[2]; $buf += " ○ "
+            $buf += FG $cYellow[0] $cYellow[1] $cYellow[2]; $buf += " $circle "
         } else {
-            $buf += FG $cOverlay0[0] $cOverlay0[1] $cOverlay0[2]; $buf += " ● "
+            $buf += FG $cOverlay0[0] $cOverlay0[1] $cOverlay0[2]; $buf += " $dot "
         }
         $buf += Reset
 
@@ -172,7 +175,7 @@ function Render {
         $buf += MoveTo $row 1
         if ($sel) { $buf += BG $cSurface0[0] $cSurface0[1] $cSurface0[2] }
 
-        $branchPrefix = (" " * $idxStr.Length) + "└─"
+        $branchPrefix = (" " * $idxStr.Length) + "$([char]0x2514)$([char]0x2500)"
         $buf += FG $cOverlay0[0] $cOverlay0[1] $cOverlay0[2]
         $buf += $branchPrefix
 
