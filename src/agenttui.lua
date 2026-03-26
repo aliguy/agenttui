@@ -186,9 +186,11 @@ config.disable_default_key_bindings = true
 
 -- Re-add essential WezTerm bindings
 config.keys = {
-  -- Clipboard
+  -- Clipboard (both CTRL+C/V and CTRL+SHIFT+C/V)
   { key = "c", mods = "CTRL|SHIFT", action = act.CopyTo("Clipboard") },
   { key = "v", mods = "CTRL|SHIFT", action = act.PasteFrom("Clipboard") },
+  { key = "v", mods = "CTRL", action = act.PasteFrom("Clipboard") },
+  { key = "Insert", mods = "SHIFT", action = act.PasteFrom("Clipboard") },
   -- Font size
   { key = "-", mods = "CTRL", action = act.DecreaseFontSize },
   { key = "=", mods = "CTRL", action = act.IncreaseFontSize },
