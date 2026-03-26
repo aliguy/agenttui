@@ -3,6 +3,8 @@
 # Runs as a persistent process in the left WezTerm pane
 
 $ErrorActionPreference = "SilentlyContinue"
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
 $StateDir = Join-Path $env:USERPROFILE ".agenttui"
 $SessionsFile = Join-Path $StateDir "sessions.json"
 $SelectionFile = Join-Path $StateDir "selected.txt"
@@ -150,18 +152,18 @@ function Render {
         $buf += Reset
         if ($sel) { $buf += BG $cSurface0[0] $cSurface0[1] $cSurface0[2] }
 
-        # Status icon (plain ASCII - Unicode doesn't render in PS console)
+        # Status icon (UTF-8 encoding set above)
         $status = "$($s.status)".Trim().ToLower()
         if ($status -eq "running") {
-            $buf += FG $cGreen[0] $cGreen[1] $cGreen[2]; $buf += " o"
+            $buf += FG $cGreen[0] $cGreen[1] $cGreen[2]; $buf += " ● "
         } elseif ($status -eq "ready") {
-            $buf += FG $cBlue[0] $cBlue[1] $cBlue[2]; $buf += " o"
+            $buf += FG $cBlue[0] $cBlue[1] $cBlue[2]; $buf += " ● "
         } elseif ($status -eq "paused") {
-            $buf += FG $cOverlay0[0] $cOverlay0[1] $cOverlay0[2]; $buf += " ="
+            $buf += FG $cOverlay0[0] $cOverlay0[1] $cOverlay0[2]; $buf += " ⏸ "
         } elseif ($status -eq "loading") {
-            $buf += FG $cYellow[0] $cYellow[1] $cYellow[2]; $buf += " ~"
+            $buf += FG $cYellow[0] $cYellow[1] $cYellow[2]; $buf += " ○ "
         } else {
-            $buf += FG $cOverlay0[0] $cOverlay0[1] $cOverlay0[2]; $buf += " o"
+            $buf += FG $cOverlay0[0] $cOverlay0[1] $cOverlay0[2]; $buf += " ● "
         }
         $buf += Reset
 
@@ -170,7 +172,7 @@ function Render {
         $buf += MoveTo $row 1
         if ($sel) { $buf += BG $cSurface0[0] $cSurface0[1] $cSurface0[2] }
 
-        $branchPrefix = (" " * $idxStr.Length) + "|-"
+        $branchPrefix = (" " * $idxStr.Length) + "└─"
         $buf += FG $cOverlay0[0] $cOverlay0[1] $cOverlay0[2]
         $buf += $branchPrefix
 
