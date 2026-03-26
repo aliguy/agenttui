@@ -723,8 +723,19 @@ wezterm.on("gui-startup", function(cmd)
   _G.at_preview_pane_id = right_pane:pane_id()
   _G.at_main_tab_id = tab:tab_id()
 
-  -- Right pane: welcome
-  right_pane:send_text("powershell -NoProfile -Command \"cls; Write-Host; Write-Host; Write-Host '         === AgentTUI ===' -ForegroundColor Cyan; Write-Host; Write-Host '     No agents running yet.' -ForegroundColor Gray; Write-Host; Write-Host '  Press Alt+N to create a new session.' -ForegroundColor Gray; Write-Host '  Press Alt+/ for help.' -ForegroundColor DarkGray; Write-Host; Read-Host 'Press Enter to dismiss'\"\r\n")
+  -- Right pane: clear and show welcome (non-blocking so pane stays at cmd prompt)
+  right_pane:send_text("cls\r\n")
+  wezterm.time.call_after(0.3, function()
+    -- Inject the welcome text directly into the terminal display (doesn't affect cmd state)
+    right_pane:inject_output("\r\n\r\n")
+    right_pane:inject_output("         \x1b[36m=== AgentTUI ===\x1b[0m\r\n")
+    right_pane:inject_output("\r\n")
+    right_pane:inject_output("     \x1b[90mNo agents running yet.\x1b[0m\r\n")
+    right_pane:inject_output("\r\n")
+    right_pane:inject_output("  \x1b[90mPress Alt+N to create a new session.\x1b[0m\r\n")
+    right_pane:inject_output("  \x1b[90mPress Alt+/ for help.\x1b[0m\r\n")
+    right_pane:inject_output("\r\n")
+  end)
 end)
 
 return config
