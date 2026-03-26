@@ -111,7 +111,7 @@ local function git_in(dir, args)
 end
 
 local function sanitize_branch(name)
-  return name:gsub("[^%w%-_/]", "-"):gsub("%-+", "-"):gsub("^%-", ""):gsub("%-$", "")
+  return name:gsub("[^%w%-_/.]", "-"):gsub("%-+", "-"):gsub("^%-", ""):gsub("%-$", "")
 end
 
 local function detect_repo(path)
@@ -123,7 +123,7 @@ end
 local function create_worktree(repo_path, title, branch_prefix)
   local ts = tostring(os.time())
   local safe = sanitize_branch(title)
-  local branch = (branch_prefix or "agenttui/") .. safe
+  local branch = sanitize_branch((branch_prefix or "agenttui/") .. safe)
   local wt_path = (WORKTREE_DIR .. "/" .. safe .. "-" .. ts):gsub("/", "\\")
 
   wezterm.log_info("AgentTUI: Creating worktree: repo=" .. repo_path .. " branch=" .. branch .. " path=" .. wt_path)
