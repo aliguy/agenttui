@@ -1,0 +1,216 @@
+-- keybindings.lua
+-- Leader key + key table bindings for AgentTUI
+
+local wezterm = require("wezterm")
+local act = wezterm.action
+
+local M = {}
+
+function M.apply(config)
+  -- Leader key: CTRL+A (like tmux/screen)
+  config.leader = { key = "a", mods = "CTRL", timeout_milliseconds = 2000 }
+
+  config.keys = {
+    -- =====================
+    -- Session management
+    -- =====================
+
+    -- New session
+    {
+      key = "n",
+      mods = "LEADER",
+      action = act.EmitEvent("cs:new-session"),
+    },
+
+    -- New session with prompt
+    {
+      key = "n",
+      mods = "LEADER|SHIFT",
+      action = act.EmitEvent("cs:new-session-prompt"),
+    },
+
+    -- Pause current session (checkout)
+    {
+      key = "c",
+      mods = "LEADER",
+      action = act.EmitEvent("cs:pause-session"),
+    },
+
+    -- Resume a paused session
+    {
+      key = "r",
+      mods = "LEADER",
+      action = act.EmitEvent("cs:resume-session"),
+    },
+
+    -- Push changes
+    {
+      key = "p",
+      mods = "LEADER",
+      action = act.EmitEvent("cs:push-session"),
+    },
+
+    -- Delete session
+    {
+      key = "d",
+      mods = "LEADER|SHIFT",
+      action = act.EmitEvent("cs:delete-session"),
+    },
+
+    -- =====================
+    -- Navigation
+    -- =====================
+
+    -- Next session tab
+    {
+      key = "j",
+      mods = "LEADER",
+      action = act.EmitEvent("cs:next-session"),
+    },
+
+    -- Previous session tab
+    {
+      key = "k",
+      mods = "LEADER",
+      action = act.EmitEvent("cs:prev-session"),
+    },
+
+    -- Also support bracket navigation
+    {
+      key = "]",
+      mods = "LEADER",
+      action = act.EmitEvent("cs:next-session"),
+    },
+    {
+      key = "[",
+      mods = "LEADER",
+      action = act.EmitEvent("cs:prev-session"),
+    },
+
+    -- =====================
+    -- Views
+    -- =====================
+
+    -- Show diff for current session
+    {
+      key = "d",
+      mods = "LEADER",
+      action = act.EmitEvent("cs:show-diff"),
+    },
+
+    -- Open terminal in worktree
+    {
+      key = "t",
+      mods = "LEADER",
+      action = act.EmitEvent("cs:open-terminal"),
+    },
+
+    -- =====================
+    -- Help
+    -- =====================
+    {
+      key = "/",
+      mods = "LEADER|SHIFT",
+      action = act.EmitEvent("cs:show-help"),
+    },
+
+    -- =====================
+    -- Tab navigation (standard WezTerm)
+    -- =====================
+    {
+      key = "1",
+      mods = "LEADER",
+      action = act.ActivateTab(0),
+    },
+    {
+      key = "2",
+      mods = "LEADER",
+      action = act.ActivateTab(1),
+    },
+    {
+      key = "3",
+      mods = "LEADER",
+      action = act.ActivateTab(2),
+    },
+    {
+      key = "4",
+      mods = "LEADER",
+      action = act.ActivateTab(3),
+    },
+    {
+      key = "5",
+      mods = "LEADER",
+      action = act.ActivateTab(4),
+    },
+    {
+      key = "6",
+      mods = "LEADER",
+      action = act.ActivateTab(5),
+    },
+    {
+      key = "7",
+      mods = "LEADER",
+      action = act.ActivateTab(6),
+    },
+    {
+      key = "8",
+      mods = "LEADER",
+      action = act.ActivateTab(7),
+    },
+    {
+      key = "9",
+      mods = "LEADER",
+      action = act.ActivateTab(8),
+    },
+
+    -- Send CTRL+A to the terminal (press leader twice)
+    {
+      key = "a",
+      mods = "LEADER|CTRL",
+      action = act.SendKey({ key = "a", mods = "CTRL" }),
+    },
+  }
+
+  -- Help overlay event
+  wezterm.on("cs:show-help", function(window, pane)
+    local help_text = [[
+╔══════════════════════════════════════════════════╗
+║                 AgentTUI Help                    ║
+╠══════════════════════════════════════════════════╣
+║                                                  ║
+║  Leader key: CTRL+A                              ║
+║                                                  ║
+║  Session Management:                             ║
+║    ^A n     Create new session                   ║
+║    ^A N     Create new session with prompt        ║
+║    ^A c     Pause current session (checkout)     ║
+║    ^A r     Resume a paused session              ║
+║    ^A p     Push changes to remote               ║
+║    ^A D     Delete a session                     ║
+║                                                  ║
+║  Navigation:                                     ║
+║    ^A j/]   Next session                         ║
+║    ^A k/[   Previous session                     ║
+║    ^A 1-9   Jump to tab by number                ║
+║                                                  ║
+║  Views:                                          ║
+║    ^A d     Show git diff for session            ║
+║    ^A t     Open terminal in worktree            ║
+║                                                  ║
+║  Other:                                          ║
+║    ^A ?     Show this help                       ║
+║    ^A ^A    Send CTRL+A to terminal              ║
+║                                                  ║
+╚══════════════════════════════════════════════════╝
+]]
+
+    -- Show help by spawning a pane that displays the text
+    pane:split({
+      direction = "Bottom",
+      size = 0.4,
+      args = { "bash", "-c", "echo '" .. help_text:gsub("'", "'\\''") .. "' && read -n 1 -s -r -p 'Press any key to close...'" },
+    })
+  end)
+end
+
+return M

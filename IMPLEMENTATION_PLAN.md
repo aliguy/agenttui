@@ -24,7 +24,25 @@ agenttui/
 └── ...                      # Original Claude Squad source (reference)
 ```
 
-The plugin is loaded via `wezterm.plugin.require()` from the user's `wezterm.lua` config.
+The plugin is **opt-in and isolated** — it never touches the user's existing `wezterm.lua`. Instead, it ships its own launcher config that starts a dedicated WezTerm window.
+
+---
+
+## Isolation Strategy (No Conflict with Running WezTerm)
+
+The user's existing WezTerm installation and config remain untouched. We achieve this by:
+
+1. **Dedicated config file**: `agenttui/wezterm-plugin/agenttui.lua` is a standalone WezTerm config that includes all our plugin logic. It is NOT the user's `~/.wezterm.lua`.
+
+2. **Launcher script**: `agenttui/launch.sh` (and `launch.ps1` for Windows) starts WezTerm with our custom config:
+   ```bash
+   wezterm --config-file /path/to/agenttui/wezterm-plugin/agenttui.lua
+   ```
+   This runs a completely separate WezTerm window with its own config, keybindings, and behavior.
+
+3. **Separate state directory**: We use `~/.agenttui/` instead of `~/.claude-squad/` for our state, avoiding any collision.
+
+4. **No global WezTerm modifications**: No changes to `~/.wezterm.lua`, `~/.config/wezterm/`, or any system-level config.
 
 ---
 
