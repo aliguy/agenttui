@@ -37,7 +37,7 @@ config.initial_cols = 160
 config.initial_rows = 45
 
 -- Set a distinct title so user knows this is AgentTUI, not their normal terminal
-config.default_window_title = "AgentTUI"
+-- Title is set via the gui-startup event below instead
 
 -- Status update interval for our status bar
 config.status_update_interval = 500
@@ -62,13 +62,19 @@ if user_config.auto_yes then
   daemon.start(user_config)
 end
 
--- Startup event: spawn initial session list pane
+-- Startup event: spawn initial window
 wezterm.on("gui-startup", function(cmd)
   local tab, pane, window = wezterm.mux.spawn_window({})
-  -- The first pane is our "home" — show a welcome message
-  pane:send_text("echo '=== AgentTUI ==='\necho 'Press CTRL+A then ? for help'\necho ''\n")
-  -- Store the window for later use
   window:set_title("AgentTUI")
+  tab:set_title("home")
+
+  -- Use cls to clear, then echo welcome with Windows-compatible syntax
+  pane:send_text('cls\r\n')
+  wezterm.time.call_after(0.3, function()
+    pane:send_text('echo === AgentTUI ===\r\n')
+    pane:send_text('echo Press CTRL+A then ? for help\r\n')
+    pane:send_text('echo.\r\n')
+  end)
 end)
 
 return config

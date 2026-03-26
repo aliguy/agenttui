@@ -40,13 +40,11 @@ function M.show_in_pane(parent_pane, worktree_path, base_commit)
     args = { "git", "-C", worktree_path, "diff", "--color=always" }
   end
 
-  -- Pipe through less for scrolling
-  local cmd = table.concat(args, " ") .. " | less -R"
-
+  -- Spawn git diff directly (scrollback handles scrolling)
   local diff_pane = parent_pane:split({
     direction = "Right",
     size = 0.5,
-    args = { "bash", "-c", cmd },
+    args = args,
   })
 
   return diff_pane

@@ -204,12 +204,16 @@ function M.apply(config)
 ╚══════════════════════════════════════════════════╝
 ]]
 
-    -- Show help by spawning a pane that displays the text
-    pane:split({
+    -- Show help by injecting text into a bottom split
+    local help_pane = pane:split({
       direction = "Bottom",
       size = 0.4,
-      args = { "bash", "-c", "echo '" .. help_text:gsub("'", "'\\''") .. "' && read -n 1 -s -r -p 'Press any key to close...'" },
     })
+    -- Send the help text line by line using Windows-compatible echo
+    for line in help_text:gmatch("[^\n]+") do
+      help_pane:send_text("echo " .. line .. "\r\n")
+    end
+    help_pane:send_text("echo.\r\necho Press any key to close... && pause >nul && exit\r\n")
   end)
 end
 
