@@ -99,9 +99,14 @@ end
 -- GIT WORKTREE
 -- ============================================================
 local function git_in(dir, args)
-  local cmd = { "git", "-C", dir }
+  -- Normalize path for Windows
+  local norm_dir = dir:gsub("/", "\\")
+  local cmd = { "git", "-C", norm_dir }
   for _, a in ipairs(args) do table.insert(cmd, a) end
   local success, stdout, stderr = wezterm.run_child_process(cmd)
+  if not success then
+    wezterm.log_error("AgentTUI git failed: " .. table.concat(cmd, " ") .. " => " .. (stderr or ""))
+  end
   return success, (stdout or ""):gsub("%s+$", ""), (stderr or ""):gsub("%s+$", "")
 end
 
@@ -119,7 +124,9 @@ local function create_worktree(repo_path, title, branch_prefix)
   local ts = tostring(os.time())
   local safe = sanitize_branch(title)
   local branch = (branch_prefix or "agenttui/") .. safe
-  local wt_path = WORKTREE_DIR .. "/" .. safe .. "-" .. ts
+  local wt_path = (WORKTREE_DIR .. "/" .. safe .. "-" .. ts):gsub("/", "\\")
+
+  wezterm.log_info("AgentTUI: Creating worktree: repo=" .. repo_path .. " branch=" .. branch .. " path=" .. wt_path)
 
   local ok, _, stderr = git_in(repo_path, { "worktree", "add", "-b", branch, wt_path })
   if not ok then return nil, "Worktree failed: " .. stderr end
@@ -235,6 +242,7 @@ config.keys = {
               { Text = "Git repo path (or Enter for cwd): " },
             }),
             action = wezterm.action_callback(function(w2, p2, repo_input)
+              wezterm.log_info("AgentTUI: repo_input='" .. (repo_input or "nil") .. "'")
               -- Use provided path or try to detect from CWD
               local repo
               if repo_input and repo_input ~= "" then
