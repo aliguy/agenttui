@@ -222,7 +222,6 @@ config.keys = {
 
   -- New session: ALT+N
   -- Two prompts: 1) session name, 2) repo path
-  -- Uses a pending_session global to pass data between callbacks
   {
     key = "n",
     mods = "ALT",
@@ -234,8 +233,10 @@ config.keys = {
       }),
       action = wezterm.action_callback(function(window, pane, session_name)
         if not session_name or session_name == "" then return end
-        -- Store name globally and prompt for repo
+        -- Capture mux_window now — it gets lost in nested callbacks
+        local mux_win = window:mux_window()
         _G.pending_session_name = session_name
+        _G.pending_mux_window = mux_win
         window:perform_action(
           act.PromptInputLine({
             description = wezterm.format({
@@ -245,10 +246,12 @@ config.keys = {
             }),
             action = wezterm.action_callback(function(w2, p2, repo_input)
               local name = _G.pending_session_name
+              local mwin = _G.pending_mux_window
               _G.pending_session_name = nil
+              _G.pending_mux_window = nil
               if not name or not repo_input or repo_input == "" then return end
 
-              -- Defer the heavy work to avoid blocking in callback
+              -- Defer git ops out of callback
               wezterm.time.call_after(0, function()
                 local repo = detect_repo(repo_input)
                 if not repo then
@@ -268,7 +271,7 @@ config.keys = {
                 local prog_args = {}
                 for word in program:gmatch("%S+") do table.insert(prog_args, word) end
 
-                local tab, new_pane, _ = w2:mux_window():spawn_tab({
+                local tab, new_pane, _ = mwin:spawn_tab({
                   args = prog_args,
                   cwd = wt.worktree_path,
                 })
