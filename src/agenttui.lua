@@ -221,55 +221,90 @@ config.keys = {
         { Foreground = { Color = "#89b4fa" } },
         { Text = "New session name: " },
       }),
-      action = wezterm.action_callback(function(window, pane, line)
-        if not line or line == "" then return end
+      action = wezterm.action_callback(function(window, pane, session_name)
+        if not session_name or session_name == "" then return end
 
-        -- Detect repo from current pane
-        local cwd_url = pane:get_current_working_dir()
-        local cwd = cwd_url and (cwd_url.file_path or "") or ""
-        cwd = cwd:gsub("/$", "")
-        local repo = detect_repo(cwd)
-        if not repo then
-          wezterm.log_error("AgentTUI: Not in a git repo")
-          return
-        end
+        -- After getting the name, ask for the repo path
+        window:perform_action(
+          act.PromptInputLine({
+            description = wezterm.format({
+              { Attribute = { Intensity = "Bold" } },
+              { Foreground = { Color = "#f9e2af" } },
+              { Text = "Git repo path (or Enter for cwd): " },
+            }),
+            action = wezterm.action_callback(function(w2, p2, repo_input)
+              -- Use provided path or try to detect from CWD
+              local repo
+              if repo_input and repo_input ~= "" then
+                repo = detect_repo(repo_input)
+                if not repo then
+                  -- Try the path directly
+                  repo = repo_input:gsub("\\", "/"):gsub("/$", "")
+                  local check = detect_repo(repo)
+                  if check then repo = check else
+                    wezterm.log_error("AgentTUI: '" .. repo_input .. "' is not a git repo")
+                    return
+                  end
+                end
+              else
+                -- Try CWD
+                local cwd_url = p2:get_current_working_dir()
+                local cwd = ""
+                if cwd_url then
+                  -- WezTerm returns a URL; extract the path
+                  cwd = cwd_url.file_path or ""
+                  -- On Windows, file_path might be /C:/Users/... - strip leading /
+                  if cwd:match("^/%a:") then cwd = cwd:sub(2) end
+                  cwd = cwd:gsub("/$", "")
+                end
+                if cwd == "" then cwd = home end
+                repo = detect_repo(cwd)
+                if not repo then
+                  wezterm.log_error("AgentTUI: CWD '" .. cwd .. "' is not a git repo. Provide a path.")
+                  return
+                end
+              end
 
-        local user_cfg = load_user_config()
-        local wt, err = create_worktree(repo, line, user_cfg.branch_prefix or "agenttui/")
-        if not wt then
-          wezterm.log_error("AgentTUI: " .. (err or "worktree error"))
-          return
-        end
+              local user_cfg = load_user_config()
+              local wt, err = create_worktree(repo, session_name, user_cfg.branch_prefix or "agenttui/")
+              if not wt then
+                wezterm.log_error("AgentTUI: " .. (err or "worktree error"))
+                return
+              end
 
-        local id = tostring(os.time()) .. "-" .. tostring(math.random(10000, 99999))
-        local program = user_cfg.default_program or "claude"
-        local args = {}
-        for w in program:gmatch("%S+") do table.insert(args, w) end
+              local id = tostring(os.time()) .. "-" .. tostring(math.random(10000, 99999))
+              local program = user_cfg.default_program or "claude"
+              local args = {}
+              for word in program:gmatch("%S+") do table.insert(args, word) end
 
-        local tab, new_pane, _ = window:mux_window():spawn_tab({
-          args = args,
-          cwd = wt.worktree_path,
-        })
+              local tab, new_pane, _ = w2:mux_window():spawn_tab({
+                args = args,
+                cwd = wt.worktree_path,
+              })
 
-        if tab and new_pane then
-          tab:set_title(line)
-          local s = {
-            id = id,
-            title = line,
-            program = program,
-            status = "running",
-            repo_path = repo,
-            branch = wt.branch,
-            worktree_path = wt.worktree_path,
-            base_commit = wt.base_commit,
-            pane_id = new_pane:pane_id(),
-            tab_id = tab:tab_id(),
-            diff_stats = { additions = 0, deletions = 0 },
-            created_at = os.date("!%Y-%m-%dT%H:%M:%SZ"),
-          }
-          table.insert(sessions, s)
-          state_save()
-        end
+              if tab and new_pane then
+                tab:set_title(session_name)
+                local s = {
+                  id = id,
+                  title = session_name,
+                  program = program,
+                  status = "running",
+                  repo_path = repo,
+                  branch = wt.branch,
+                  worktree_path = wt.worktree_path,
+                  base_commit = wt.base_commit,
+                  pane_id = new_pane:pane_id(),
+                  tab_id = tab:tab_id(),
+                  diff_stats = { additions = 0, deletions = 0 },
+                  created_at = os.date("!%Y-%m-%dT%H:%M:%SZ"),
+                }
+                table.insert(sessions, s)
+                state_save()
+              end
+            end),
+          }),
+          pane
+        )
       end),
     }),
   },
