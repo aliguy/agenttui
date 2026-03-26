@@ -24,7 +24,7 @@ local daemon = require("daemon")
 local config = wezterm.config_builder()
 
 -- Window appearance - distinct from user's normal WezTerm
-config.window_decorations = "RESIZE"
+config.window_decorations = "TITLE | RESIZE"
 config.color_scheme = "Catppuccin Mocha"
 config.font = wezterm.font("JetBrains Mono", { weight = "Medium" })
 config.font_size = 11.0
@@ -62,18 +62,35 @@ if user_config.auto_yes then
   daemon.start(user_config)
 end
 
--- Startup event: spawn initial window
+-- Startup event: Claude Squad-style layout
+-- ┌──────────────┬─────────────────────────────────┐
+-- │ Session List  │  Preview / Diff / Terminal       │
+-- │ (30%)         │  (70%)                           │
+-- ├──────────────┴─────────────────────────────────┤
+-- │  Menu bar (status bar handles this)             │
+-- └─────────────────────────────────────────────────┘
 wezterm.on("gui-startup", function(cmd)
-  local tab, pane, window = wezterm.mux.spawn_window({})
+  -- Spawn the main window — right pane is the "preview" area
+  local tab, right_pane, window = wezterm.mux.spawn_window({})
   window:set_title("AgentTUI")
-  tab:set_title("home")
+  tab:set_title("AgentTUI")
 
-  -- Use cls to clear, then echo welcome with Windows-compatible syntax
-  pane:send_text('cls\r\n')
-  wezterm.time.call_after(0.3, function()
-    pane:send_text('echo === AgentTUI ===\r\n')
-    pane:send_text('echo Press CTRL+A then ? for help\r\n')
-    pane:send_text('echo.\r\n')
+  -- Split left pane for the session list (30% width)
+  local list_pane = right_pane:split({
+    direction = "Left",
+    size = 0.3,
+    args = { "powershell", "-ExecutionPolicy", "Bypass", "-File", plugin_root .. "/list_renderer.ps1" },
+  })
+
+  -- The right pane shows a welcome message
+  right_pane:send_text('cls\r\n')
+  wezterm.time.call_after(0.5, function()
+    right_pane:send_text('echo.\r\n')
+    right_pane:send_text('echo     === AgentTUI ===\r\n')
+    right_pane:send_text('echo.\r\n')
+    right_pane:send_text('echo     No agents running yet.\r\n')
+    right_pane:send_text('echo     Press CTRL+A then n to create a new session.\r\n')
+    right_pane:send_text('echo.\r\n')
   end)
 end)
 
