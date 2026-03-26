@@ -178,15 +178,13 @@ config.initial_rows = 45
 config.status_update_interval = 500
 
 -- ============================================================
--- KEYBINDINGS (Leader: CTRL+S)
+-- KEYBINDINGS (CTRL+SHIFT+key — no leader key needed)
 -- ============================================================
-config.leader = { key = "s", mods = "CTRL", timeout_milliseconds = 2000 }
-
 config.keys = {
-  -- New session
+  -- New session: CTRL+SHIFT+N
   {
     key = "n",
-    mods = "LEADER",
+    mods = "CTRL|SHIFT",
     action = act.PromptInputLine({
       description = wezterm.format({
         { Attribute = { Intensity = "Bold" } },
@@ -249,7 +247,7 @@ config.keys = {
   -- New session with prompt
   {
     key = "n",
-    mods = "LEADER|SHIFT",
+    mods = "CTRL|ALT|SHIFT",
     action = act.PromptInputLine({
       description = wezterm.format({
         { Attribute = { Intensity = "Bold" } },
@@ -316,7 +314,7 @@ config.keys = {
   -- Pause current session
   {
     key = "c",
-    mods = "LEADER",
+    mods = "CTRL|SHIFT",
     action = wezterm.action_callback(function(window, pane)
       local s = find_session_by_pane(pane:pane_id())
       if not s then
@@ -339,7 +337,7 @@ config.keys = {
   -- Resume a paused session
   {
     key = "r",
-    mods = "LEADER",
+    mods = "CTRL|SHIFT",
     action = wezterm.action_callback(function(window, pane)
       local paused = {}
       for _, s in ipairs(sessions) do
@@ -387,7 +385,7 @@ config.keys = {
   -- Delete session
   {
     key = "d",
-    mods = "LEADER|SHIFT",
+    mods = "CTRL|ALT|SHIFT",
     action = wezterm.action_callback(function(window, pane)
       if #sessions == 0 then return end
       local choices = {}
@@ -429,7 +427,7 @@ config.keys = {
   -- Push changes
   {
     key = "p",
-    mods = "LEADER",
+    mods = "CTRL|SHIFT",
     action = wezterm.action_callback(function(window, pane)
       local s = find_session_by_pane(pane:pane_id())
       if not s then
@@ -446,7 +444,7 @@ config.keys = {
   -- Show diff
   {
     key = "d",
-    mods = "LEADER",
+    mods = "CTRL|SHIFT",
     action = wezterm.action_callback(function(window, pane)
       local s = find_session_by_pane(pane:pane_id())
       if not s then
@@ -465,7 +463,7 @@ config.keys = {
   -- Open terminal in worktree
   {
     key = "t",
-    mods = "LEADER",
+    mods = "CTRL|SHIFT",
     action = wezterm.action_callback(function(window, pane)
       local s = find_session_by_pane(pane:pane_id())
       if not s then
@@ -478,29 +476,27 @@ config.keys = {
   },
 
   -- Navigate sessions
-  { key = "j", mods = "LEADER", action = act.ActivateTabRelative(1) },
-  { key = "k", mods = "LEADER", action = act.ActivateTabRelative(-1) },
-  { key = "]", mods = "LEADER", action = act.ActivateTabRelative(1) },
-  { key = "[", mods = "LEADER", action = act.ActivateTabRelative(-1) },
+  { key = "j", mods = "CTRL|SHIFT", action = act.ActivateTabRelative(1) },
+  { key = "k", mods = "CTRL|SHIFT", action = act.ActivateTabRelative(-1) },
+  { key = "]", mods = "CTRL|SHIFT", action = act.ActivateTabRelative(1) },
+  { key = "[", mods = "CTRL|SHIFT", action = act.ActivateTabRelative(-1) },
 
   -- Tab numbers
-  { key = "1", mods = "LEADER", action = act.ActivateTab(0) },
-  { key = "2", mods = "LEADER", action = act.ActivateTab(1) },
-  { key = "3", mods = "LEADER", action = act.ActivateTab(2) },
-  { key = "4", mods = "LEADER", action = act.ActivateTab(3) },
-  { key = "5", mods = "LEADER", action = act.ActivateTab(4) },
-  { key = "6", mods = "LEADER", action = act.ActivateTab(5) },
-  { key = "7", mods = "LEADER", action = act.ActivateTab(6) },
-  { key = "8", mods = "LEADER", action = act.ActivateTab(7) },
-  { key = "9", mods = "LEADER", action = act.ActivateTab(8) },
+  { key = "1", mods = "CTRL|SHIFT", action = act.ActivateTab(0) },
+  { key = "2", mods = "CTRL|SHIFT", action = act.ActivateTab(1) },
+  { key = "3", mods = "CTRL|SHIFT", action = act.ActivateTab(2) },
+  { key = "4", mods = "CTRL|SHIFT", action = act.ActivateTab(3) },
+  { key = "5", mods = "CTRL|SHIFT", action = act.ActivateTab(4) },
+  { key = "6", mods = "CTRL|SHIFT", action = act.ActivateTab(5) },
+  { key = "7", mods = "CTRL|SHIFT", action = act.ActivateTab(6) },
+  { key = "8", mods = "CTRL|SHIFT", action = act.ActivateTab(7) },
+  { key = "9", mods = "CTRL|SHIFT", action = act.ActivateTab(8) },
 
-  -- Send CTRL+S to terminal (press leader twice)
-  { key = "s", mods = "LEADER|CTRL", action = act.SendKey({ key = "s", mods = "CTRL" }) },
 
-  -- Help
+  -- Help: CTRL+SHIFT+/
   {
     key = "/",
-    mods = "LEADER|SHIFT",
+    mods = "CTRL|SHIFT",
     action = wezterm.action_callback(function(window, pane)
       local help_pane = pane:split({ direction = "Bottom", size = 0.4 })
       local lines = {
@@ -508,27 +504,23 @@ config.keys = {
         "echo            AgentTUI Help",
         "echo ========================================",
         "echo.",
-        "echo   Leader key: CTRL+S",
-        "echo.",
         "echo   Session Management:",
-        "echo     ^S n     Create new session",
-        "echo     ^S N     Create new session with prompt",
-        "echo     ^S c     Pause current session",
-        "echo     ^S r     Resume a paused session",
-        "echo     ^S p     Push changes to remote",
-        "echo     ^S D     Delete a session",
+        "echo     Ctrl+Shift+N       New session",
+        "echo     Ctrl+Shift+Alt+N   New session with prompt",
+        "echo     Ctrl+Shift+C       Pause current session",
+        "echo     Ctrl+Shift+R       Resume a paused session",
+        "echo     Ctrl+Shift+P       Push changes to remote",
+        "echo     Ctrl+Shift+Alt+D   Delete a session",
         "echo.",
         "echo   Navigation:",
-        "echo     ^S j/]   Next session",
-        "echo     ^S k/[   Previous session",
-        "echo     ^S 1-9   Jump to tab by number",
+        "echo     Ctrl+Shift+J       Next session",
+        "echo     Ctrl+Shift+K       Previous session",
         "echo.",
         "echo   Views:",
-        "echo     ^S d     Show git diff",
-        "echo     ^S t     Open terminal in worktree",
+        "echo     Ctrl+Shift+D       Show git diff",
+        "echo     Ctrl+Shift+T       Open terminal in worktree",
         "echo.",
-        "echo   ^S ?     This help",
-        "echo   ^S ^S    Send CTRL+S to terminal",
+        "echo   Ctrl+Shift+/        This help",
         "echo ========================================",
         "pause",
         "exit",
@@ -581,24 +573,21 @@ wezterm.on("update-status", function(window, pane)
   if active_tab then s = find_session_by_tab(active_tab:tab_id()) end
   if not s then s = find_session_by_pane(pane:pane_id()) end
 
-  -- Left: keybinding hints
+  -- Left: keybinding hints (Ctrl+Shift+key)
   window:set_left_status(wezterm.format({
     { Foreground = { Color = COLORS.accent } }, { Attribute = { Intensity = "Bold" } },
-    { Text = " ^S" }, { Attribute = { Intensity = "Normal" } },
-    { Foreground = { Color = COLORS.dim } }, { Text = " then: " },
-    { Foreground = { Color = COLORS.text } }, { Text = "n" },
-    { Foreground = { Color = COLORS.dim } }, { Text = " new  " },
+    { Text = " Ctrl+Shift+" }, { Attribute = { Intensity = "Normal" } },
     { Foreground = { Color = COLORS.text } }, { Text = "N" },
-    { Foreground = { Color = COLORS.dim } }, { Text = " +prompt  " },
-    { Foreground = { Color = COLORS.text } }, { Text = "c" },
+    { Foreground = { Color = COLORS.dim } }, { Text = " new  " },
+    { Foreground = { Color = COLORS.text } }, { Text = "C" },
     { Foreground = { Color = COLORS.dim } }, { Text = " pause  " },
-    { Foreground = { Color = COLORS.text } }, { Text = "r" },
+    { Foreground = { Color = COLORS.text } }, { Text = "R" },
     { Foreground = { Color = COLORS.dim } }, { Text = " resume  " },
-    { Foreground = { Color = COLORS.text } }, { Text = "p" },
+    { Foreground = { Color = COLORS.text } }, { Text = "P" },
     { Foreground = { Color = COLORS.dim } }, { Text = " push  " },
     { Foreground = { Color = COLORS.text } }, { Text = "D" },
-    { Foreground = { Color = COLORS.dim } }, { Text = " delete  " },
-    { Foreground = { Color = COLORS.text } }, { Text = "?" },
+    { Foreground = { Color = COLORS.dim } }, { Text = " diff  " },
+    { Foreground = { Color = COLORS.text } }, { Text = "/" },
     { Foreground = { Color = COLORS.dim } }, { Text = " help " },
   }))
 
@@ -643,7 +632,7 @@ wezterm.on("gui-startup", function(cmd)
 
   -- Right pane: welcome via a one-shot PowerShell command (clean output, no prompt noise)
   -- We close the default cmd pane and replace with a clean powershell welcome
-  right_pane:send_text("powershell -NoProfile -Command \"cls; Write-Host; Write-Host; Write-Host '         === AgentTUI ===' -ForegroundColor Cyan; Write-Host; Write-Host '     No agents running yet.' -ForegroundColor Gray; Write-Host; Write-Host '  Press CTRL+S then n to create' -ForegroundColor Gray; Write-Host '  a new session.' -ForegroundColor Gray; Write-Host; Read-Host 'Press Enter to dismiss'\"\r\n")
+  right_pane:send_text("powershell -NoProfile -Command \"cls; Write-Host; Write-Host; Write-Host '         === AgentTUI ===' -ForegroundColor Cyan; Write-Host; Write-Host '     No agents running yet.' -ForegroundColor Gray; Write-Host; Write-Host '  Press Ctrl+Shift+N to create' -ForegroundColor Gray; Write-Host '  a new session.' -ForegroundColor Gray; Write-Host; Read-Host 'Press Enter to dismiss'\"\r\n")
 end)
 
 return config
