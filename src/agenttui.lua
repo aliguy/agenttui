@@ -172,7 +172,7 @@ config.window_padding = { left = 4, right = 4, top = 4, bottom = 4 }
 config.use_fancy_tab_bar = false
 config.tab_bar_at_bottom = true
 config.hide_tab_bar_if_only_one_tab = false
-config.window_background_opacity = 0.97
+config.window_background_opacity = 1.0
 config.initial_cols = 160
 config.initial_rows = 45
 config.status_update_interval = 500
@@ -641,15 +641,17 @@ wezterm.on("gui-startup", function(cmd)
     args = { "powershell", "-ExecutionPolicy", "Bypass", "-File", plugin_root .. "\\list_renderer.ps1" },
   })
 
-  -- Right pane: welcome
-  right_pane:send_text("cls\r\n")
-  wezterm.time.call_after(0.5, function()
+  -- Right pane: welcome (use @echo off to hide command prompts)
+  right_pane:send_text("@echo off & cls\r\n")
+  wezterm.time.call_after(0.3, function()
     right_pane:send_text("echo.\r\n")
-    right_pane:send_text("echo     === AgentTUI ===\r\n")
     right_pane:send_text("echo.\r\n")
-    right_pane:send_text("echo     No agents running yet.\r\n")
-    right_pane:send_text("echo     Press CTRL+S then n to create a new session.\r\n")
+    right_pane:send_text("echo          === AgentTUI ===\r\n")
     right_pane:send_text("echo.\r\n")
+    right_pane:send_text("echo      No agents running yet.\r\n")
+    right_pane:send_text("echo.\r\n")
+    right_pane:send_text("echo   Press CTRL+S then n to create\r\n")
+    right_pane:send_text("echo   a new session.\r\n")
   end)
 end)
 
