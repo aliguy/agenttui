@@ -151,13 +151,17 @@ function Render {
         if ($sel) { $buf += BG $cSurface0[0] $cSurface0[1] $cSurface0[2] }
 
         # Status icon
-        $status = if ($s.status) { $s.status } else { "ready" }
-        switch ($status) {
-            "running" { $buf += FG $cGreen[0] $cGreen[1] $cGreen[2]; $buf += " $([char]0x25CF)" }
-            "ready"   { $buf += FG $cBlue[0] $cBlue[1] $cBlue[2]; $buf += " $([char]0x25CF)" }
-            "paused"  { $buf += FG $cOverlay0[0] $cOverlay0[1] $cOverlay0[2]; $buf += " $([char]0x23F8)" }
-            "loading" { $buf += FG $cYellow[0] $cYellow[1] $cYellow[2]; $buf += " $([char]0x25CB)" }
-            default   { $buf += FG $cOverlay0[0] $cOverlay0[1] $cOverlay0[2]; $buf += " ?" }
+        $status = "$($s.status)".Trim().ToLower()
+        if ($status -eq "running") {
+            $buf += FG $cGreen[0] $cGreen[1] $cGreen[2]; $buf += " $([char]0x25CF)"
+        } elseif ($status -eq "ready") {
+            $buf += FG $cBlue[0] $cBlue[1] $cBlue[2]; $buf += " $([char]0x25CF)"
+        } elseif ($status -eq "paused") {
+            $buf += FG $cOverlay0[0] $cOverlay0[1] $cOverlay0[2]; $buf += " $([char]0x23F8)"
+        } elseif ($status -eq "loading") {
+            $buf += FG $cYellow[0] $cYellow[1] $cYellow[2]; $buf += " $([char]0x25CB)"
+        } else {
+            $buf += FG $cOverlay0[0] $cOverlay0[1] $cOverlay0[2]; $buf += " $([char]0x25CF)"
         }
         $buf += Reset
 
