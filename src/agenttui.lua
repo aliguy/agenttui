@@ -178,7 +178,8 @@ config.font_size = 11.0
 config.window_padding = { left = 4, right = 4, top = 4, bottom = 4 }
 config.use_fancy_tab_bar = false
 config.tab_bar_at_bottom = true
-config.hide_tab_bar_if_only_one_tab = false
+config.hide_tab_bar_if_only_one_tab = true
+config.show_tab_index_in_tab_bar = false
 config.window_background_opacity = 1.0
 config.initial_cols = 160
 config.initial_rows = 45
@@ -629,22 +630,31 @@ wezterm.on("update-status", function(window, pane)
   if active_tab then s = find_session_by_tab(active_tab:tab_id()) end
   if not s then s = find_session_by_pane(pane:pane_id()) end
 
-  -- Left: keybinding hints (Alt+key)
+  -- Bottom menu bar (Claude Squad style): n new · d kill · enter open · p push · c checkout · tab switch · q quit
+  local sep = { Foreground = { Color = "#3C3C3C" } }
+  local sep_text = { Text = " \u{2022} " }  -- bullet dot
+  local key_color = { Foreground = { Color = "#7F7A7A" } }
+  local desc_color = { Foreground = { Color = "#9C9494" } }
+  local action_color = { Foreground = { Color = "#b4befe" } }
+
   window:set_left_status(wezterm.format({
-    { Foreground = { Color = COLORS.accent } }, { Attribute = { Intensity = "Bold" } },
-    { Text = " Alt+" }, { Attribute = { Intensity = "Normal" } },
-    { Foreground = { Color = COLORS.text } }, { Text = "N" },
-    { Foreground = { Color = COLORS.dim } }, { Text = " new  " },
-    { Foreground = { Color = COLORS.text } }, { Text = "C" },
-    { Foreground = { Color = COLORS.dim } }, { Text = " pause  " },
-    { Foreground = { Color = COLORS.text } }, { Text = "R" },
-    { Foreground = { Color = COLORS.dim } }, { Text = " resume  " },
-    { Foreground = { Color = COLORS.text } }, { Text = "P" },
-    { Foreground = { Color = COLORS.dim } }, { Text = " push  " },
-    { Foreground = { Color = COLORS.text } }, { Text = "D" },
-    { Foreground = { Color = COLORS.dim } }, { Text = " diff  " },
-    { Foreground = { Color = COLORS.text } }, { Text = "/" },
-    { Foreground = { Color = COLORS.dim } }, { Text = " help " },
+    { Text = "  " },
+    action_color, { Text = "n" }, desc_color, { Text = " new" },
+    sep, sep_text,
+    action_color, { Text = "d" }, desc_color, { Text = " kill" },
+    sep, sep_text,
+    key_color, { Text = "enter" }, desc_color, { Text = " open" },
+    sep, sep_text,
+    action_color, { Text = "p" }, desc_color, { Text = " push" },
+    sep, sep_text,
+    action_color, { Text = "c" }, desc_color, { Text = " checkout" },
+    sep, sep_text,
+    key_color, { Text = "tab" }, desc_color, { Text = " switch" },
+    sep, sep_text,
+    key_color, { Text = "?" }, desc_color, { Text = " help" },
+    sep, sep_text,
+    key_color, { Text = "q" }, desc_color, { Text = " quit" },
+    { Text = "  " },
   }))
 
   -- Right: session info
@@ -674,20 +684,29 @@ end)
 -- ============================================================
 state_init()
 
+-- Global pane references for the split layout
+_G.at_list_pane_id = nil
+_G.at_preview_pane_id = nil
+_G.at_main_tab_id = nil
+
 wezterm.on("gui-startup", function(cmd)
   local tab, right_pane, window = wezterm.mux.spawn_window({})
   window:set_title("AgentTUI")
   tab:set_title("AgentTUI")
 
-  -- Left pane: session list
+  -- Left pane: session list (30%)
   local list_pane = right_pane:split({
     direction = "Left",
     size = 0.3,
     args = { "powershell", "-ExecutionPolicy", "Bypass", "-File", plugin_root .. "\\list_renderer.ps1" },
   })
 
-  -- Right pane: welcome via a one-shot PowerShell command (clean output, no prompt noise)
-  -- We close the default cmd pane and replace with a clean powershell welcome
+  -- Store pane IDs for later
+  _G.at_list_pane_id = list_pane:pane_id()
+  _G.at_preview_pane_id = right_pane:pane_id()
+  _G.at_main_tab_id = tab:tab_id()
+
+  -- Right pane: welcome
   right_pane:send_text("powershell -NoProfile -Command \"cls; Write-Host; Write-Host; Write-Host '         === AgentTUI ===' -ForegroundColor Cyan; Write-Host; Write-Host '     No agents running yet.' -ForegroundColor Gray; Write-Host; Write-Host '  Press Alt+N to create a new session.' -ForegroundColor Gray; Write-Host '  Press Alt+/ for help.' -ForegroundColor DarkGray; Write-Host; Read-Host 'Press Enter to dismiss'\"\r\n")
 end)
 
