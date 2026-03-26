@@ -153,15 +153,15 @@ function Render {
         # Status icon
         $status = "$($s.status)".Trim().ToLower()
         if ($status -eq "running") {
-            $buf += FG $cGreen[0] $cGreen[1] $cGreen[2]; $buf += " $([char]0x25CF)"
+            $buf += FG $cGreen[0] $cGreen[1] $cGreen[2]; $buf += " $([char]0x2022)"
         } elseif ($status -eq "ready") {
-            $buf += FG $cBlue[0] $cBlue[1] $cBlue[2]; $buf += " $([char]0x25CF)"
+            $buf += FG $cBlue[0] $cBlue[1] $cBlue[2]; $buf += " $([char]0x2022)"
         } elseif ($status -eq "paused") {
-            $buf += FG $cOverlay0[0] $cOverlay0[1] $cOverlay0[2]; $buf += " $([char]0x23F8)"
+            $buf += FG $cOverlay0[0] $cOverlay0[1] $cOverlay0[2]; $buf += " $([char]0x2016)"
         } elseif ($status -eq "loading") {
             $buf += FG $cYellow[0] $cYellow[1] $cYellow[2]; $buf += " $([char]0x25CB)"
         } else {
-            $buf += FG $cOverlay0[0] $cOverlay0[1] $cOverlay0[2]; $buf += " $([char]0x25CF)"
+            $buf += FG $cOverlay0[0] $cOverlay0[1] $cOverlay0[2]; $buf += " $([char]0x2022)"
         }
         $buf += Reset
 
@@ -170,7 +170,7 @@ function Render {
         $buf += MoveTo $row 1
         if ($sel) { $buf += BG $cSurface0[0] $cSurface0[1] $cSurface0[2] }
 
-        $branchPrefix = (" " * $idxStr.Length) + "$([char]0xA4A7)-"
+        $branchPrefix = (" " * $idxStr.Length) + "|-"
         $buf += FG $cOverlay0[0] $cOverlay0[1] $cOverlay0[2]
         $buf += $branchPrefix
 
