@@ -385,7 +385,7 @@ config.keys = {
     }),
   },
 
-  -- Pause current session: ALT+C
+  -- Pause current session: ALT+C (checkout)
   {
     key = "c",
     mods = "ALT",
@@ -395,16 +395,31 @@ config.keys = {
         local tab = pane:tab()
         if tab then s = find_session_by_tab(tab:tab_id()) end
       end
-      if not s then return end
+      if not s or s.status == "paused" then return end
 
-      local msg = "[agenttui] pause: " .. s.title .. " " .. os.date("%Y-%m-%d %H:%M:%S")
-      commit_all(s.worktree_path, msg)
-      pane:send_text("exit\r\n")
-      wezterm.time.call_after(1, function()
-        remove_worktree(s.repo_path, s.worktree_path)
+      local wt = s.worktree_path
+      local repo = s.repo_path
+      local branch = s.branch
+
+      -- Send exit to the agent, then defer git ops
+      pane:send_text("/exit\r\n")
+      update_session(s.id, { status = "paused", pane_id = nil, tab_id = nil })
+
+      wezterm.time.call_after(2, function()
+        if wt and wt ~= "" then
+          commit_all(wt, "[agenttui] pause: " .. s.title .. " " .. os.date("%Y-%m-%d %H:%M:%S"))
+          remove_worktree(repo, wt)
+          update_session(s.id, { worktree_path = "" })
+        end
       end)
-      window:copy_to_clipboard(s.branch, "Clipboard")
-      update_session(s.id, { status = "paused", pane_id = nil, tab_id = nil, worktree_path = "" })
+
+      -- Copy branch to clipboard
+      window:copy_to_clipboard(branch, "Clipboard")
+
+      -- Show paused message in the pane
+      wezterm.time.call_after(3, function()
+        pane:send_text("echo Session '" .. s.title .. "' paused. Branch: " .. branch .. "\r\n")
+      end)
     end),
   },
 
@@ -433,22 +448,35 @@ config.keys = {
             end
             if not s then return end
 
-            local wt, err = create_worktree(s.repo_path, s.title, "")
-            if not wt then return end
+            -- Defer git ops
+            local mwin = w:mux_window()
+            wezterm.time.call_after(0, function()
+              -- Recreate worktree from existing branch
+              local ts = tostring(os.time())
+              local safe = sanitize_branch(s.title)
+              local wt_path = normalize_path(WORKTREE_DIR .. "/" .. safe .. "-" .. ts)
 
-            local args = {}
-            for word in (s.program or "claude"):gmatch("%S+") do table.insert(args, word) end
+              local ok, _, stderr = git_in(s.repo_path, { "worktree", "add", wt_path, s.branch })
+              if not ok then
+                wezterm.log_error("AgentTUI: Resume failed: " .. (stderr or ""))
+                return
+              end
 
-            local tab, new_pane, _ = w:mux_window():spawn_tab({
-              args = args, cwd = wt.worktree_path,
-            })
-            if tab and new_pane then
-              tab:set_title(s.title)
-              update_session(s.id, {
-                status = "running", worktree_path = wt.worktree_path,
-                pane_id = new_pane:pane_id(), tab_id = tab:tab_id(),
-              })
-            end
+              -- Launch agent in the preview pane
+              local preview_pane = _G.at_preview_pane_id and wezterm.mux.get_pane(_G.at_preview_pane_id)
+              if preview_pane then
+                local program = s.program or "claude"
+                local cmd = "cd /d " .. wt_path .. " && " .. program
+                preview_pane:send_text(cmd .. "\r\n")
+
+                update_session(s.id, {
+                  status = "running", worktree_path = wt_path,
+                  pane_id = preview_pane:pane_id(),
+                  tab_id = preview_pane:tab() and preview_pane:tab():tab_id() or nil,
+                })
+                wezterm.log_info("AgentTUI: Resumed session '" .. s.title .. "'")
+              end
+            end)
           end),
         }),
         pane
@@ -509,9 +537,20 @@ config.keys = {
         if tab then s = find_session_by_tab(tab:tab_id()) end
       end
       if not s or not s.worktree_path or s.worktree_path == "" then return end
-      local msg = "[agenttui] update from '" .. s.title .. "' " .. os.date("%Y-%m-%d %H:%M:%S")
-      commit_all(s.worktree_path, msg)
-      push_branch(s.worktree_path, s.branch)
+
+      local wt = s.worktree_path
+      local branch = s.branch
+      local title = s.title
+      wezterm.time.call_after(0, function()
+        local msg = "[agenttui] update from '" .. title .. "' " .. os.date("%Y-%m-%d %H:%M:%S")
+        commit_all(wt, msg)
+        local ok, _, stderr = push_branch(wt, branch)
+        if ok then
+          wezterm.log_info("AgentTUI: Pushed " .. branch)
+        else
+          wezterm.log_error("AgentTUI: Push failed: " .. (stderr or ""))
+        end
+      end)
     end),
   },
 
@@ -578,23 +617,25 @@ config.keys = {
         "echo ========================================",
         "echo.",
         "echo   Session Management:",
-        "echo     Alt+N         New session",
-        "echo     Alt+Shift+N   New session with prompt",
-        "echo     Alt+C         Pause current session",
-        "echo     Alt+R         Resume a paused session",
-        "echo     Alt+P         Push changes to remote",
-        "echo     Alt+Shift+D   Delete a session",
+        "echo     Alt+N           New session",
+        "echo     Alt+Shift+N     New session with prompt",
+        "echo     Alt+Shift+D     Delete a session",
+        "echo.",
+        "echo   Actions:",
+        "echo     Alt+S           Commit and push to GitHub",
+        "echo     Alt+C           Checkout (pause session)",
+        "echo     Alt+R           Resume a paused session",
         "echo.",
         "echo   Navigation:",
-        "echo     Alt+J / Alt+]   Next session",
-        "echo     Alt+K / Alt+[   Previous session",
-        "echo     Alt+1-9         Jump to tab",
+        "echo     Alt+J / Alt+K   Next / Previous session",
         "echo.",
         "echo   Views:",
-        "echo     Alt+D         Show git diff",
-        "echo     Alt+T         Open terminal in worktree",
+        "echo     Alt+D           Show git diff",
+        "echo     Alt+T           Open terminal in worktree",
         "echo.",
-        "echo   Alt+/           This help",
+        "echo   Other:",
+        "echo     Alt+/           This help",
+        "echo     Alt+Q           Quit AgentTUI",
         "echo ========================================",
         "pause",
         "exit",
@@ -603,6 +644,13 @@ config.keys = {
         help_pane:send_text(l .. "\r\n")
       end
     end),
+  },
+
+  -- Quit: ALT+Q
+  {
+    key = "q",
+    mods = "ALT",
+    action = act.QuitApplication,
   },
 }
 
