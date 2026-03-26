@@ -1,9 +1,9 @@
 -- ui.lua
 -- Status bar, tab title formatting, and visual indicators
 
-local wezterm = require("wezterm")
-local state = require("at_state")
-local worktree = require("at_worktree")
+local wezterm = AT_WEZTERM or require("wezterm")
+local state = AT_LOAD("at_state")
+local worktree = AT_LOAD("at_worktree")
 
 local M = {}
 
@@ -98,7 +98,7 @@ function M.setup(cfg)
       { Text = " " },
       { Foreground = { Color = COLORS.accent } },
       { Attribute = { Intensity = "Bold" } },
-      { Text = "^A" },
+      { Text = "^S" },
       { Attribute = { Intensity = "Normal" } },
       { Foreground = { Color = COLORS.dim } },
       { Text = " then: " },

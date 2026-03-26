@@ -1,14 +1,14 @@
 -- keybindings.lua
 -- Leader key + key table bindings for AgentTUI
 
-local wezterm = require("wezterm")
+local wezterm = AT_WEZTERM or require("wezterm")
 local act = wezterm.action
 
 local M = {}
 
 function M.apply(config)
-  -- Leader key: CTRL+A (like tmux/screen)
-  config.leader = { key = "a", mods = "CTRL", timeout_milliseconds = 2000 }
+  -- Leader key: CTRL+S
+  config.leader = { key = "s", mods = "CTRL", timeout_milliseconds = 2000 }
 
   config.keys = {
     -- =====================
@@ -163,11 +163,11 @@ function M.apply(config)
       action = act.ActivateTab(8),
     },
 
-    -- Send CTRL+A to the terminal (press leader twice)
+    -- Send CTRL+S to the terminal (press leader twice)
     {
-      key = "a",
+      key = "s",
       mods = "LEADER|CTRL",
-      action = act.SendKey({ key = "a", mods = "CTRL" }),
+      action = act.SendKey({ key = "s", mods = "CTRL" }),
     },
   }
 
@@ -178,28 +178,28 @@ function M.apply(config)
 ║                 AgentTUI Help                    ║
 ╠══════════════════════════════════════════════════╣
 ║                                                  ║
-║  Leader key: CTRL+A                              ║
+║  Leader key: CTRL+S                              ║
 ║                                                  ║
 ║  Session Management:                             ║
-║    ^A n     Create new session                   ║
-║    ^A N     Create new session with prompt        ║
-║    ^A c     Pause current session (checkout)     ║
-║    ^A r     Resume a paused session              ║
-║    ^A p     Push changes to remote               ║
-║    ^A D     Delete a session                     ║
+║    ^S n     Create new session                   ║
+║    ^S N     Create new session with prompt        ║
+║    ^S c     Pause current session (checkout)     ║
+║    ^S r     Resume a paused session              ║
+║    ^S p     Push changes to remote               ║
+║    ^S D     Delete a session                     ║
 ║                                                  ║
 ║  Navigation:                                     ║
-║    ^A j/]   Next session                         ║
-║    ^A k/[   Previous session                     ║
-║    ^A 1-9   Jump to tab by number                ║
+║    ^S j/]   Next session                         ║
+║    ^S k/[   Previous session                     ║
+║    ^S 1-9   Jump to tab by number                ║
 ║                                                  ║
 ║  Views:                                          ║
-║    ^A d     Show git diff for session            ║
-║    ^A t     Open terminal in worktree            ║
+║    ^S d     Show git diff for session            ║
+║    ^S t     Open terminal in worktree            ║
 ║                                                  ║
 ║  Other:                                          ║
-║    ^A ?     Show this help                       ║
-║    ^A ^A    Send CTRL+A to terminal              ║
+║    ^S ?     Show this help                       ║
+║    ^S ^S    Send CTRL+S to terminal              ║
 ║                                                  ║
 ╚══════════════════════════════════════════════════╝
 ]]

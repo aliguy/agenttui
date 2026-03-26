@@ -1,8 +1,8 @@
 -- worktree.lua
 -- Git worktree and branch operations via shell commands
 
-local wezterm = require("wezterm")
-local state = require("at_state")
+local wezterm = AT_WEZTERM or require("wezterm")
+local state = AT_LOAD("at_state")
 
 local M = {}
 

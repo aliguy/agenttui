@@ -2,10 +2,10 @@
 -- Session lifecycle: create, pause, resume, delete
 -- Orchestrates worktree, state, and WezTerm pane management
 
-local wezterm = require("wezterm")
+local wezterm = AT_WEZTERM or require("wezterm")
 local act = wezterm.action
-local state = require("at_state")
-local worktree = require("at_worktree")
+local state = AT_LOAD("at_state")
+local worktree = AT_LOAD("at_worktree")
 
 local M = {}
 

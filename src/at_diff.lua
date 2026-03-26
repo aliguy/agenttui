@@ -1,8 +1,8 @@
 -- diff.lua
 -- Git diff display and formatting utilities
 
-local wezterm = require("wezterm")
-local worktree = require("at_worktree")
+local wezterm = AT_WEZTERM or require("wezterm")
+local worktree = AT_LOAD("at_worktree")
 
 local M = {}
 

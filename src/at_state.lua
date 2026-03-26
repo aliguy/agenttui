@@ -1,7 +1,7 @@
 -- state.lua
 -- Session state persistence to ~/.agenttui/sessions.json
 
-local wezterm = require("wezterm")
+local wezterm = AT_WEZTERM or require("wezterm")
 
 local M = {}
 

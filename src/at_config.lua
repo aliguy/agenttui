@@ -1,7 +1,7 @@
 -- config.lua
 -- Loads and saves ~/.agenttui/config.json
 
-local wezterm = require("wezterm")
+local wezterm = AT_WEZTERM or require("wezterm")
 
 local M = {}
 

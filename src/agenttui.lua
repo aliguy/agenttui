@@ -8,17 +8,17 @@
 local wezterm = require("wezterm")
 local act = wezterm.action
 
--- Resolve plugin root relative to this config file
-local plugin_root = wezterm.config_dir
+-- Set up global module loader (WezTerm's require doesn't work with custom paths on Windows)
+local plugin_root = wezterm.config_dir:gsub("/", "\\")
+dofile(plugin_root .. "\\at_loader.lua")
 
--- Load our modules (prefixed with at_ to avoid name clashes)
-package.path = plugin_root .. "/?.lua;" .. package.path
-local at_config = require("at_config")
-local at_state = require("at_state")
-local at_session = require("at_session")
-local at_ui = require("at_ui")
-local at_keybindings = require("at_keybindings")
-local at_daemon = require("at_daemon")
+-- Load our modules
+local at_config = AT_LOAD("at_config")
+local at_state = AT_LOAD("at_state")
+local at_session = AT_LOAD("at_session")
+local at_ui = AT_LOAD("at_ui")
+local at_keybindings = AT_LOAD("at_keybindings")
+local at_daemon = AT_LOAD("at_daemon")
 
 -- Build config
 local config = wezterm.config_builder()
@@ -61,26 +61,25 @@ end
 
 -- Startup event: Claude Squad-style layout
 wezterm.on("gui-startup", function(cmd)
-  -- Spawn the main window — right pane is the "preview" area
   local tab, right_pane, window = wezterm.mux.spawn_window({})
   window:set_title("AgentTUI")
   tab:set_title("AgentTUI")
 
-  -- Split left pane for the session list (30% width)
+  -- Split left pane for session list (30%)
   local list_pane = right_pane:split({
     direction = "Left",
     size = 0.3,
-    args = { "powershell", "-ExecutionPolicy", "Bypass", "-File", plugin_root .. "/list_renderer.ps1" },
+    args = { "powershell", "-ExecutionPolicy", "Bypass", "-File", plugin_root .. "\\list_renderer.ps1" },
   })
 
-  -- The right pane shows a welcome message
+  -- Welcome message in right pane
   right_pane:send_text('cls\r\n')
   wezterm.time.call_after(0.5, function()
     right_pane:send_text('echo.\r\n')
     right_pane:send_text('echo     === AgentTUI ===\r\n')
     right_pane:send_text('echo.\r\n')
     right_pane:send_text('echo     No agents running yet.\r\n')
-    right_pane:send_text('echo     Press CTRL+A then n to create a new session.\r\n')
+    right_pane:send_text('echo     Press CTRL+S then n to create a new session.\r\n')
     right_pane:send_text('echo.\r\n')
   end)
 end)
