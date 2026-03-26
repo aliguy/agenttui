@@ -2,7 +2,7 @@
 -- AutoYes polling: detect agent prompts and auto-accept them
 
 local wezterm = require("wezterm")
-local state = require("state")
+local state = require("at_state")
 
 local M = {}
 

@@ -11,14 +11,14 @@ local act = wezterm.action
 -- Resolve plugin root relative to this config file
 local plugin_root = wezterm.config_dir
 
--- Load our modules
+-- Load our modules (prefixed with at_ to avoid name clashes)
 package.path = plugin_root .. "/?.lua;" .. package.path
-local config_mod = require("config")
-local state = require("state")
-local session = require("session")
-local ui = require("ui")
-local keybindings = require("keybindings")
-local daemon = require("daemon")
+local at_config = require("at_config")
+local at_state = require("at_state")
+local at_session = require("at_session")
+local at_ui = require("at_ui")
+local at_keybindings = require("at_keybindings")
+local at_daemon = require("at_daemon")
 
 -- Build config
 local config = wezterm.config_builder()
@@ -36,39 +36,30 @@ config.window_background_opacity = 0.97
 config.initial_cols = 160
 config.initial_rows = 45
 
--- Set a distinct title so user knows this is AgentTUI, not their normal terminal
--- Title is set via the gui-startup event below instead
-
 -- Status update interval for our status bar
 config.status_update_interval = 500
 
 -- Apply keybindings
-keybindings.apply(config)
+at_keybindings.apply(config)
 
 -- Initialize state directory
-state.init()
+at_state.init()
 
 -- Load user's agenttui config
-local user_config = config_mod.load()
+local user_config = at_config.load()
 
 -- Wire up UI events
-ui.setup(user_config)
+at_ui.setup(user_config)
 
 -- Wire up session events
-session.setup(user_config)
+at_session.setup(user_config)
 
 -- Start daemon if auto_yes enabled
 if user_config.auto_yes then
-  daemon.start(user_config)
+  at_daemon.start(user_config)
 end
 
 -- Startup event: Claude Squad-style layout
--- ┌──────────────┬─────────────────────────────────┐
--- │ Session List  │  Preview / Diff / Terminal       │
--- │ (30%)         │  (70%)                           │
--- ├──────────────┴─────────────────────────────────┤
--- │  Menu bar (status bar handles this)             │
--- └─────────────────────────────────────────────────┘
 wezterm.on("gui-startup", function(cmd)
   -- Spawn the main window — right pane is the "preview" area
   local tab, right_pane, window = wezterm.mux.spawn_window({})

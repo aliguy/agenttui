@@ -12,9 +12,14 @@ local WORKTREE_DIR = STATE_DIR .. "/worktrees"
 -- In-memory session list
 local sessions = {}
 
+local function win_mkdir(path)
+  local win_path = path:gsub("/", "\\")
+  wezterm.run_child_process({ "cmd", "/c", "if not exist \"" .. win_path .. "\" mkdir \"" .. win_path .. "\"" })
+end
+
 function M.init()
-  wezterm.run_child_process({ "mkdir", "-p", STATE_DIR })
-  wezterm.run_child_process({ "mkdir", "-p", WORKTREE_DIR })
+  win_mkdir(STATE_DIR)
+  win_mkdir(WORKTREE_DIR)
   M.load()
 end
 

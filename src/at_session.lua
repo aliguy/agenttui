@@ -4,8 +4,8 @@
 
 local wezterm = require("wezterm")
 local act = wezterm.action
-local state = require("state")
-local worktree = require("worktree")
+local state = require("at_state")
+local worktree = require("at_worktree")
 
 local M = {}
 

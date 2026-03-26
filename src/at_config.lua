@@ -19,7 +19,7 @@ local DEFAULT_CONFIG = {
 
 -- Ensure state directory exists
 local function ensure_dir()
-  local success, stdout, stderr = wezterm.run_child_process({ "mkdir", "-p", STATE_DIR })
+  local success, stdout, stderr = wezterm.run_child_process({ "cmd", "/c", "if not exist \"" .. STATE_DIR:gsub("/", "\\") .. "\" mkdir \"" .. STATE_DIR:gsub("/", "\\") .. "\"" })
   return success
 end
 

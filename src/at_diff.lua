@@ -2,7 +2,7 @@
 -- Git diff display and formatting utilities
 
 local wezterm = require("wezterm")
-local worktree = require("worktree")
+local worktree = require("at_worktree")
 
 local M = {}
 

@@ -2,8 +2,8 @@
 -- Status bar, tab title formatting, and visual indicators
 
 local wezterm = require("wezterm")
-local state = require("state")
-local worktree = require("worktree")
+local state = require("at_state")
+local worktree = require("at_worktree")
 
 local M = {}
 
