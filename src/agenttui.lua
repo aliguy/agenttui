@@ -95,6 +95,60 @@ local function update_session(id, updates)
   return nil
 end
 
+-- Selected session index (1-based)
+_G.at_selected_idx = 1
+
+local function get_selected_session()
+  if #sessions == 0 then return nil end
+  if _G.at_selected_idx > #sessions then _G.at_selected_idx = #sessions end
+  if _G.at_selected_idx < 1 then _G.at_selected_idx = 1 end
+  return sessions[_G.at_selected_idx]
+end
+
+-- Write selected index to file for list_renderer to read
+local function write_selection()
+  local sel = get_selected_session()
+  local f = io.open(STATE_DIR .. "/selected.txt", "w")
+  if f then
+    f:write(sel and sel.id or "")
+    f:close()
+  end
+end
+
+-- Refresh the preview pane with the selected session's terminal output
+function refresh_preview()
+  local preview_pane = _G.at_preview_pane_id and wezterm.mux.get_pane(_G.at_preview_pane_id)
+  if not preview_pane then return end
+
+  local sel = get_selected_session()
+  if not sel or not sel.pane_id then
+    -- No session selected — show empty state
+    preview_pane:inject_output("\x1b[2J\x1b[H")  -- clear screen
+    preview_pane:inject_output("\r\n  No session selected.\r\n")
+    return
+  end
+
+  -- Get the session's actual pane
+  local session_pane = wezterm.mux.get_pane(sel.pane_id)
+  if not session_pane then return end
+
+  -- Capture the session's terminal output
+  local text = session_pane:get_lines_as_text(50)
+  if text then
+    -- Clear preview and inject captured output
+    preview_pane:inject_output("\x1b[2J\x1b[H")  -- clear
+    preview_pane:inject_output(text)
+  end
+end
+
+-- Start periodic preview refresh
+local function start_preview_timer()
+  wezterm.time.call_after(1, function()
+    refresh_preview()
+    start_preview_timer()  -- reschedule
+  end)
+end
+
 -- ============================================================
 -- GIT WORKTREE
 -- ============================================================
@@ -286,28 +340,45 @@ config.keys = {
                 local prog_args = {}
                 for word in program:gmatch("%S+") do table.insert(prog_args, word) end
 
-                -- Run the agent in the existing right (preview) pane
-                local preview_pane = _G.at_preview_pane_id and wezterm.mux.get_pane(_G.at_preview_pane_id)
+                -- Spawn agent in a HIDDEN TAB (not the preview pane)
+                local new_tab, new_pane, _ = mwin:spawn_tab({
+                  args = prog_args,
+                  cwd = wt.worktree_path,
+                })
 
-                if preview_pane then
-                  -- cd to worktree and launch the agent in the existing pane
-                  local cmd = "cd /d " .. wt.worktree_path .. " && " .. table.concat(prog_args, " ")
-                  preview_pane:send_text(cmd .. "\r\n")
-
-                  local main_tab = preview_pane:tab()
+                if new_tab and new_pane then
+                  new_tab:set_title(name)
                   table.insert(sessions, {
                     id = id, title = name, program = program, status = "running",
                     repo_path = repo, branch = wt.branch,
                     worktree_path = wt.worktree_path, base_commit = wt.base_commit,
-                    pane_id = preview_pane:pane_id(),
-                    tab_id = main_tab and main_tab:tab_id() or nil,
+                    pane_id = new_pane:pane_id(),
+                    tab_id = new_tab:tab_id(),
                     diff_stats = { additions = 0, deletions = 0 },
                     created_at = os.date("!%Y-%m-%dT%H:%M:%SZ"),
                   })
+                  -- Select the new session
+                  _G.at_selected_idx = #sessions
+                  write_selection()
                   state_save()
+
+                  -- Switch back to the main tab (list + preview)
+                  wezterm.time.call_after(0.5, function()
+                    local main_tab_id = _G.at_main_tab_id
+                    if main_tab_id then
+                      local tabs = mwin:tabs()
+                      for _, t in ipairs(tabs) do
+                        if t:tab_id() == main_tab_id then
+                          t:activate()
+                          break
+                        end
+                      end
+                    end
+                  end)
+
                   wezterm.log_info("AgentTUI: Session '" .. name .. "' created on branch " .. wt.branch)
                 else
-                  wezterm.log_error("AgentTUI: No preview pane found")
+                  wezterm.log_error("AgentTUI: Failed to spawn tab")
                 end
               end)
             end),
@@ -588,22 +659,31 @@ config.keys = {
     end),
   },
 
-  -- Navigate sessions: ALT+J / ALT+K
-  { key = "j", mods = "ALT", action = act.ActivateTabRelative(1) },
-  { key = "k", mods = "ALT", action = act.ActivateTabRelative(-1) },
-  { key = "]", mods = "ALT", action = act.ActivateTabRelative(1) },
-  { key = "[", mods = "ALT", action = act.ActivateTabRelative(-1) },
-
-  -- Tab numbers: ALT+1-9
-  { key = "1", mods = "ALT", action = act.ActivateTab(0) },
-  { key = "2", mods = "ALT", action = act.ActivateTab(1) },
-  { key = "3", mods = "ALT", action = act.ActivateTab(2) },
-  { key = "4", mods = "ALT", action = act.ActivateTab(3) },
-  { key = "5", mods = "ALT", action = act.ActivateTab(4) },
-  { key = "6", mods = "ALT", action = act.ActivateTab(5) },
-  { key = "7", mods = "ALT", action = act.ActivateTab(6) },
-  { key = "8", mods = "ALT", action = act.ActivateTab(7) },
-  { key = "9", mods = "ALT", action = act.ActivateTab(8) },
+  -- Navigate sessions: ALT+J (down) / ALT+K (up)
+  {
+    key = "j",
+    mods = "ALT",
+    action = wezterm.action_callback(function(window, pane)
+      if #sessions > 0 then
+        _G.at_selected_idx = (_G.at_selected_idx or 1) + 1
+        if _G.at_selected_idx > #sessions then _G.at_selected_idx = #sessions end
+        write_selection()
+        refresh_preview()
+      end
+    end),
+  },
+  {
+    key = "k",
+    mods = "ALT",
+    action = wezterm.action_callback(function(window, pane)
+      if #sessions > 0 then
+        _G.at_selected_idx = (_G.at_selected_idx or 1) - 1
+        if _G.at_selected_idx < 1 then _G.at_selected_idx = 1 end
+        write_selection()
+        refresh_preview()
+      end
+    end),
+  },
 
   -- Help: ALT+/
   {
@@ -690,10 +770,7 @@ wezterm.on("format-tab-title", function(tab, tabs, panes, cfg, hover, max_width)
 end)
 
 wezterm.on("update-status", function(window, pane)
-  local s = nil
-  local active_tab = window:active_tab()
-  if active_tab then s = find_session_by_tab(active_tab:tab_id()) end
-  if not s then s = find_session_by_pane(pane:pane_id()) end
+  local s = get_selected_session()
 
   -- Bottom menu bar (Claude Squad style)
   window:set_left_status(wezterm.format({
@@ -766,8 +843,11 @@ wezterm.on("gui-startup", function(cmd)
   _G.at_preview_pane_id = right_pane:pane_id()
   _G.at_main_tab_id = tab:tab_id()
 
-  -- Right pane: show welcome via title command (non-blocking, pane stays at clean cmd prompt)
+  -- Right pane: clean prompt for preview
   right_pane:send_text("@title AgentTUI Preview & cls\r\n")
+
+  -- Start preview refresh timer
+  start_preview_timer()
 end)
 
 return config

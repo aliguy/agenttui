@@ -57,6 +57,21 @@ function Load-Sessions {
             }
         } catch { }
     }
+    # Read selected session ID from file (written by Lua side)
+    if (Test-Path $SelectionFile) {
+        try {
+            $selId = (Get-Content $SelectionFile -Raw).Trim()
+            if ($selId) {
+                for ($idx = 0; $idx -lt $script:sessions.Count; $idx++) {
+                    if ($script:sessions[$idx].id -eq $selId) {
+                        $script:selectedIdx = $idx
+                        break
+                    }
+                }
+            }
+        } catch { }
+    }
+
     # Clamp selection
     if ($script:sessions.Count -gt 0) {
         if ($script:selectedIdx -ge $script:sessions.Count) {
