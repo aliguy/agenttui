@@ -620,9 +620,9 @@ config.keys = {
     end),
   },
 
-  -- Attach to selected session: ALT+ENTER (switch to session's tab for direct interaction)
+  -- Attach to selected session: ALT+O (open/attach to session's tab)
   {
-    key = "Enter",
+    key = "o",
     mods = "ALT",
     action = wezterm.action_callback(function(window, pane)
       local sel = get_selected_session()
@@ -640,9 +640,9 @@ config.keys = {
     end),
   },
 
-  -- Detach from session: ALT+ESCAPE (return to main overview tab)
+  -- Detach from session: ALT+B (back to overview)
   {
-    key = "Escape",
+    key = "b",
     mods = "ALT",
     action = wezterm.action_callback(function(window, pane)
       local main_tab_id = _G.at_main_tab_id
@@ -849,11 +849,11 @@ wezterm.on("update-status", function(window, pane)
     { Foreground = { Color = "#b4befe" } }, { Text = "a-c" },
     { Foreground = { Color = "#9C9494" } }, { Text = " checkout" },
     { Foreground = { Color = "#3C3C3C" } }, { Text = " | " },
-    { Foreground = { Color = "#b4befe" } }, { Text = "a-Ret" },
-    { Foreground = { Color = "#9C9494" } }, { Text = " attach" },
+    { Foreground = { Color = "#b4befe" } }, { Text = "a-o" },
+    { Foreground = { Color = "#9C9494" } }, { Text = " open" },
     { Foreground = { Color = "#3C3C3C" } }, { Text = " | " },
-    { Foreground = { Color = "#b4befe" } }, { Text = "a-Esc" },
-    { Foreground = { Color = "#9C9494" } }, { Text = " detach" },
+    { Foreground = { Color = "#b4befe" } }, { Text = "a-b" },
+    { Foreground = { Color = "#9C9494" } }, { Text = " back" },
     { Foreground = { Color = "#3C3C3C" } }, { Text = " | " },
     { Foreground = { Color = "#7F7A7A" } }, { Text = "a-j/k" },
     { Foreground = { Color = "#9C9494" } }, { Text = " nav" },
