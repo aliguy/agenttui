@@ -875,13 +875,9 @@ wezterm.on("update-status", function(window, pane)
     }))
   end
 
-  -- Update diff stats for running sessions
-  for _, sess in ipairs(sessions) do
-    if (sess.status == "running" or sess.status == "ready") and sess.worktree_path and sess.worktree_path ~= "" then
-      local stats = get_diff_stats(sess.worktree_path, sess.base_commit)
-      if stats then sess.diff_stats = stats end
-    end
-  end
+  -- NOTE: Diff stats update disabled — running git add -N in worktrees
+  -- while Claude Code is active causes index.lock conflicts.
+  -- Diff stats will be updated on-demand (e.g., when viewing diff tab).
 end)
 
 -- ============================================================
