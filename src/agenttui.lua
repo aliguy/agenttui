@@ -620,6 +620,45 @@ config.keys = {
     end),
   },
 
+  -- Attach to selected session: ALT+ENTER (switch to session's tab for direct interaction)
+  {
+    key = "Enter",
+    mods = "ALT",
+    action = wezterm.action_callback(function(window, pane)
+      local sel = get_selected_session()
+      if not sel or not sel.tab_id then return end
+
+      -- Find and activate the session's tab
+      local tabs = window:mux_window():tabs()
+      for _, t in ipairs(tabs) do
+        if t:tab_id() == sel.tab_id then
+          t:activate()
+          wezterm.log_info("AgentTUI: Attached to '" .. sel.title .. "'")
+          return
+        end
+      end
+    end),
+  },
+
+  -- Detach from session: ALT+ESCAPE (return to main overview tab)
+  {
+    key = "Escape",
+    mods = "ALT",
+    action = wezterm.action_callback(function(window, pane)
+      local main_tab_id = _G.at_main_tab_id
+      if not main_tab_id then return end
+
+      local tabs = window:mux_window():tabs()
+      for _, t in ipairs(tabs) do
+        if t:tab_id() == main_tab_id then
+          t:activate()
+          wezterm.log_info("AgentTUI: Detached to overview")
+          return
+        end
+      end
+    end),
+  },
+
   -- Submit PR / Push changes: ALT+S
   {
     key = "s",
@@ -810,11 +849,17 @@ wezterm.on("update-status", function(window, pane)
     { Foreground = { Color = "#b4befe" } }, { Text = "a-c" },
     { Foreground = { Color = "#9C9494" } }, { Text = " checkout" },
     { Foreground = { Color = "#3C3C3C" } }, { Text = " | " },
-    { Foreground = { Color = "#7F7A7A" } }, { Text = "a-j/k" },
-    { Foreground = { Color = "#9C9494" } }, { Text = " navigate" },
+    { Foreground = { Color = "#b4befe" } }, { Text = "a-Ret" },
+    { Foreground = { Color = "#9C9494" } }, { Text = " attach" },
     { Foreground = { Color = "#3C3C3C" } }, { Text = " | " },
-    { Foreground = { Color = "#7F7A7A" } }, { Text = "a-/" },
-    { Foreground = { Color = "#9C9494" } }, { Text = " help " },
+    { Foreground = { Color = "#b4befe" } }, { Text = "a-Esc" },
+    { Foreground = { Color = "#9C9494" } }, { Text = " detach" },
+    { Foreground = { Color = "#3C3C3C" } }, { Text = " | " },
+    { Foreground = { Color = "#7F7A7A" } }, { Text = "a-j/k" },
+    { Foreground = { Color = "#9C9494" } }, { Text = " nav" },
+    { Foreground = { Color = "#3C3C3C" } }, { Text = " | " },
+    { Foreground = { Color = "#7F7A7A" } }, { Text = "a-q" },
+    { Foreground = { Color = "#9C9494" } }, { Text = " quit " },
   }))
 
   -- Right: session info
