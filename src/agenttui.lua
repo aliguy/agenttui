@@ -115,10 +115,33 @@ local function write_selection()
   end
 end
 
+-- Sync selection from list renderer (reads selected.txt)
+local function sync_selection_from_list()
+  local f = io.open(STATE_DIR .. "/selected.txt", "r")
+  if f then
+    local sel_id = f:read("*a")
+    f:close()
+    if sel_id then
+      sel_id = sel_id:gsub("%s+", "")
+      for i, s in ipairs(sessions) do
+        if s.id == sel_id and i ~= _G.at_selected_idx then
+          _G.at_selected_idx = i
+          break
+        end
+      end
+    end
+  end
+end
+
 -- Refresh the preview pane with the selected session's terminal output
 function refresh_preview()
   local preview_pane = _G.at_preview_pane_id and wezterm.mux.get_pane(_G.at_preview_pane_id)
   if not preview_pane then return end
+
+  -- Sync selection from list renderer (in case user navigated there with j/k)
+  sync_selection_from_list()
+  -- Also reload sessions in case they changed
+  state_load()
 
   local sel = get_selected_session()
   if not sel or not sel.pane_id then
