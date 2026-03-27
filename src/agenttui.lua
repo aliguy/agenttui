@@ -626,17 +626,43 @@ config.keys = {
     mods = "ALT",
     action = wezterm.action_callback(function(window, pane)
       local sel = get_selected_session()
-      if not sel or not sel.tab_id then return end
+      wezterm.log_info("AgentTUI: Alt+O pressed. sel=" .. tostring(sel ~= nil)
+        .. " sessions=" .. tostring(#sessions)
+        .. " idx=" .. tostring(_G.at_selected_idx))
 
-      -- Find and activate the session's tab
-      local tabs = window:mux_window():tabs()
-      for _, t in ipairs(tabs) do
-        if t:tab_id() == sel.tab_id then
-          t:activate()
-          wezterm.log_info("AgentTUI: Attached to '" .. sel.title .. "'")
-          return
+      if not sel then
+        wezterm.log_error("AgentTUI: No session selected")
+        return
+      end
+
+      wezterm.log_info("AgentTUI: Session '" .. sel.title .. "' pane_id=" .. tostring(sel.pane_id) .. " tab_id=" .. tostring(sel.tab_id))
+
+      -- Find the tab containing this session's pane (more reliable than tab_id)
+      if sel.pane_id then
+        local session_pane = wezterm.mux.get_pane(sel.pane_id)
+        if session_pane then
+          local session_tab = session_pane:tab()
+          if session_tab then
+            session_tab:activate()
+            wezterm.log_info("AgentTUI: Attached to '" .. sel.title .. "' via pane lookup")
+            return
+          end
         end
       end
+
+      -- Fallback: try tab_id
+      if sel.tab_id then
+        local tabs = window:mux_window():tabs()
+        for _, t in ipairs(tabs) do
+          if t:tab_id() == sel.tab_id then
+            t:activate()
+            wezterm.log_info("AgentTUI: Attached to '" .. sel.title .. "' via tab_id")
+            return
+          end
+        end
+      end
+
+      wezterm.log_error("AgentTUI: Could not find tab for session '" .. sel.title .. "'")
     end),
   },
 
