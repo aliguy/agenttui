@@ -132,10 +132,10 @@ function refresh_preview()
   local session_pane = wezterm.mux.get_pane(sel.pane_id)
   if not session_pane then return end
 
-  -- Capture the session's terminal output
-  local text = session_pane:get_lines_as_text(50)
+  -- Capture the session's terminal output with full escape sequences (colors, formatting)
+  local text = session_pane:get_lines_as_escapes(50)
   if text then
-    -- Clear preview and inject captured output
+    -- Clear preview and inject captured output with escapes
     preview_pane:inject_output("\x1b[2J\x1b[H")  -- clear
     preview_pane:inject_output(text)
   end
